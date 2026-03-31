@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TangentFlow vs pdfmake vs jsPDF vs Puppeteer — TangentFlow</title>
+  <meta name="description" content="A comprehensive comparison of JavaScript PDF generation tools: accuracy, speed, bundle size, and developer experience." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/tangentflow.css" />
+</head>
+<body data-page="blog" data-depth="2">
+<div id="site-nav"></div>
+<main>
+  <section class="section">
+    <div class="container-narrow">
+      <nav class="breadcrumb"><a href="../">Blog</a> / TangentFlow vs pdfmake vs jsPDF vs Puppeteer</nav>
+      <article class="blog-post">
+        <header style="margin-bottom:var(--space-2xl);">
+          <time class="caption">March 2026</time>
+          <h1 class="heading-lg" style="margin-top:var(--space-sm);">TangentFlow vs pdfmake vs jsPDF vs Puppeteer: A Comprehensive Comparison</h1>
+          <p class="body-lg" style="margin-top:var(--space-md);">Four approaches to JavaScript PDF generation. We compare accuracy, performance, bundle size, and developer experience to help you choose the right tool.</p>
+        </header>
+        <div class="prose">
+
+          <h2>The Landscape of JavaScript PDF Generation</h2>
+          <p>Generating PDFs from JavaScript has been a persistent challenge for web developers. Whether you need invoices, reports, contracts, or certificates, you eventually face the same question: which library should I use?</p>
+          <p>The ecosystem has converged on four main approaches, each with a fundamentally different architecture and set of trade-offs:</p>
+          <ul>
+            <li><strong>jsPDF</strong> &mdash; an imperative, canvas-like API for drawing text and shapes directly onto PDF coordinates.</li>
+            <li><strong>pdfmake</strong> &mdash; a declarative document-definition model that handles layout for you.</li>
+            <li><strong>Puppeteer</strong> &mdash; a headless browser approach that converts HTML/CSS into PDF on the server.</li>
+            <li><strong>TangentFlow</strong> &mdash; a composable pipeline using Pretext for precise text measurement and pdf-lib for PDF output.</li>
+          </ul>
+          <p>This post breaks down the strengths and weaknesses of each approach, with code examples and a decision framework to help you choose.</p>
+
+          <h2>Quick Comparison</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>jsPDF</th>
+                <th>pdfmake</th>
+                <th>Puppeteer</th>
+                <th>TangentFlow</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Text wrapping</td>
+                <td>Manual only</td>
+                <td>Built-in</td>
+                <td>CSS-based</td>
+                <td>Pretext engine</td>
+              </tr>
+              <tr>
+                <td>Bundle size (gzipped)</td>
+                <td>~90 KB</td>
+                <td>~2 MB</td>
+                <td>N/A (server)</td>
+                <td>~160 KB</td>
+              </tr>
+              <tr>
+                <td>Generation speed</td>
+                <td>&lt;100 ms</td>
+                <td>200&ndash;500 ms</td>
+                <td>2&ndash;5 s</td>
+                <td>50&ndash;200 ms</td>
+              </tr>
+              <tr>
+                <td>Unicode / CJK support</td>
+                <td>No</td>
+                <td>Partial</td>
+                <td>Full</td>
+                <td>Full</td>
+              </tr>
+              <tr>
+                <td>Tables</td>
+                <td>Plugin (autoTable)</td>
+                <td>Built-in</td>
+                <td>HTML tables</td>
+                <td>Composable layouts</td>
+              </tr>
+              <tr>
+                <td>Server required</td>
+                <td>No</td>
+                <td>No</td>
+                <td>Yes</td>
+                <td>No</td>
+              </tr>
+              <tr>
+                <td>Typographic accuracy</td>
+                <td>Low</td>
+                <td>Medium</td>
+                <td>High</td>
+                <td>High</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>jsPDF: The Pioneer</h2>
+          <p>jsPDF is the oldest and most downloaded JavaScript PDF library, with over 3 million weekly npm downloads. It provides a low-level, imperative API modeled after the HTML Canvas: you position every element by hand using x/y coordinates.</p>
+
+          <h3>Strengths</h3>
+          <ul>
+            <li>Tiny bundle size (~90 KB gzipped) and zero server dependencies.</li>
+            <li>Simple mental model &mdash; if you know Canvas, you know jsPDF.</li>
+            <li>Fast generation for simple, single-page documents.</li>
+            <li>Large community and ecosystem of plugins like jspdf-autotable.</li>
+          </ul>
+
+          <h3>Weaknesses</h3>
+          <ul>
+            <li>No built-in text wrapping or paragraph layout. You must split strings manually.</li>
+            <li>No native Unicode or CJK support &mdash; only standard 14 PDF fonts unless you embed a TTF.</li>
+            <li>Multi-page documents require manual page-break logic.</li>
+            <li>Coordinates are absolute, making responsive or template-driven layouts painful.</li>
+          </ul>
+
+          <h3>Code Example</h3>
+<pre><code>import { jsPDF } from "jspdf";
+
+const doc = new jsPDF();
+doc.setFontSize(18);
+doc.text("Invoice #1042", 20, 20);
+
+doc.setFontSize(12);
+// Manual wrapping — you handle line breaks yourself
+const lines = doc.splitTextToSize(
+  "Thank you for your purchase. Please remit payment within 30 days.",
+  170
+);
+doc.text(lines, 20, 35);
+
+doc.save("invoice.pdf");</code></pre>
+          <p>Notice that even basic text wrapping requires an explicit call to <code>splitTextToSize</code>. For anything more complex &mdash; tables, headers, footers, page numbers &mdash; you are on your own or relying on third-party plugins.</p>
+
+          <h2>pdfmake: Declarative but Heavy</h2>
+          <p>pdfmake takes a fundamentally different approach. Instead of imperative drawing commands, you define your document as a JSON object, and pdfmake handles layout, pagination, and text wrapping for you.</p>
+
+          <h3>Strengths</h3>
+          <ul>
+            <li>Declarative API is more readable and maintainable than coordinate-based drawing.</li>
+            <li>Built-in support for tables, columns, lists, headers, and footers.</li>
+            <li>Automatic page breaks and pagination.</li>
+            <li>Works entirely client-side.</li>
+          </ul>
+
+          <h3>Weaknesses</h3>
+          <ul>
+            <li>Bundle size is roughly 2 MB gzipped because it ships its own font subsetting and layout engine.</li>
+            <li>CJK and complex-script support is unreliable. Font embedding for non-Latin scripts requires manual configuration and often produces incorrect glyph positioning.</li>
+            <li>Limited control over fine typographic details &mdash; kerning, ligatures, and line-break quality are not configurable.</li>
+            <li>The document-definition format, while powerful, becomes unwieldy for deeply nested or conditional layouts.</li>
+          </ul>
+
+          <h3>Code Example</h3>
+<pre><code>import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+const docDefinition = {
+  content: [
+    { text: "Invoice #1042", style: "header" },
+    {
+      text: "Thank you for your purchase. Please remit payment within 30 days.",
+      margin: [0, 10, 0, 20],
+    },
+    {
+      table: {
+        headerRows: 1,
+        widths: ["*", "auto", "auto"],
+        body: [
+          ["Item", "Qty", "Price"],
+          ["Widget A", "2", "$50.00"],
+          ["Widget B", "1", "$30.00"],
+        ],
+      },
+    },
+  ],
+  styles: {
+    header: { fontSize: 18, bold: true },
+  },
+};
+
+pdfMake.createPdf(docDefinition).download("invoice.pdf");</code></pre>
+          <p>The declarative model is appealing, but the 2 MB payload is a dealbreaker for many client-side applications. And once you need pixel-precise control over layout &mdash; say, matching a branded template exactly &mdash; you start fighting the abstraction.</p>
+
+          <h2>Puppeteer: The Server-Side Heavyweight</h2>
+          <p>Puppeteer (and its lighter cousin Playwright) takes an entirely different approach: render a full HTML page in a headless Chrome instance and call <code>page.pdf()</code>. This gives you the full power of CSS for layout.</p>
+
+          <h3>Strengths</h3>
+          <ul>
+            <li>Pixel-perfect rendering with full CSS support &mdash; Flexbox, Grid, custom fonts, SVG.</li>
+            <li>If you can build it as a web page, you can export it as a PDF.</li>
+            <li>Full Unicode and complex-script support out of the box.</li>
+            <li>Great for teams that already have HTML templates.</li>
+          </ul>
+
+          <h3>Weaknesses</h3>
+          <ul>
+            <li>Requires a server with a headless browser &mdash; typically 150+ MB of RAM per instance.</li>
+            <li>Slow: 2&ndash;5 seconds per document is typical, making it unsuitable for real-time or interactive use.</li>
+            <li>Cannot run in the browser. Client-side PDF generation is not possible.</li>
+            <li>Docker configuration and Chrome sandboxing add significant DevOps complexity.</li>
+            <li>CSS print media support, while improving, still has edge cases around page breaks, orphans, and widows.</li>
+          </ul>
+
+          <h3>Code Example</h3>
+<pre><code>import puppeteer from "puppeteer";
+
+const browser = await puppeteer.launch();
+const page = await browser.newPage();
+
+await page.setContent(`
+  &lt;html&gt;
+  &lt;style&gt;
+    body { font-family: "Helvetica", sans-serif; padding: 40px; }
+    h1 { font-size: 24px; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { border: 1px solid #ccc; padding: 8px; }
+  &lt;/style&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Invoice #1042&lt;/h1&gt;
+    &lt;p&gt;Thank you for your purchase.&lt;/p&gt;
+    &lt;table&gt;
+      &lt;tr&gt;&lt;th&gt;Item&lt;/th&gt;&lt;th&gt;Qty&lt;/th&gt;&lt;th&gt;Price&lt;/th&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Widget A&lt;/td&gt;&lt;td&gt;2&lt;/td&gt;&lt;td&gt;$50.00&lt;/td&gt;&lt;/tr&gt;
+    &lt;/table&gt;
+  &lt;/body&gt;
+  &lt;/html&gt;
+`);
+
+await page.pdf({ path: "invoice.pdf", format: "A4" });
+await browser.close();</code></pre>
+          <p>For server-side batch processing where speed is not critical and you need CSS-level layout fidelity, Puppeteer is hard to beat. But the infrastructure overhead makes it a poor fit for client-side applications or high-throughput pipelines.</p>
+
+          <h2>TangentFlow: Accurate, Lightweight, Client-Side</h2>
+          <p>TangentFlow takes a composable approach that separates two concerns most libraries conflate: <strong>text measurement</strong> and <strong>PDF output</strong>. It uses Pretext &mdash; a purpose-built text layout engine &mdash; for precise glyph measurement, line breaking, and paragraph shaping. It then hands the measured layout to pdf-lib for efficient PDF construction.</p>
+
+          <h3>Architecture</h3>
+          <p>The key insight is that accurate PDF generation is fundamentally a text-measurement problem. Most PDF libraries get layout wrong because they estimate glyph widths rather than measuring them from the actual font tables. Pretext reads OpenType font metrics directly, producing line breaks and paragraph layouts that match what a professional typesetting engine would produce.</p>
+
+          <h3>Strengths</h3>
+          <ul>
+            <li>Typographically accurate text layout &mdash; real font metrics, proper kerning, correct line breaking.</li>
+            <li>Full Unicode support including CJK, Arabic, and Devanagari scripts.</li>
+            <li>Runs entirely client-side with a ~160 KB gzipped footprint.</li>
+            <li>Composable pipeline: you can use Pretext for measurement and swap in any PDF backend.</li>
+            <li>Fast &mdash; typical documents generate in 50&ndash;200 ms.</li>
+            <li>Template-driven: define reusable document layouts that adapt to dynamic data.</li>
+          </ul>
+
+          <h3>Code Example</h3>
+<pre><code>import { Pretext } from "@tangentflow/pretext";
+import { PDFDocument, rgb } from "pdf-lib";
+
+// 1. Load font and measure text with Pretext
+const pretext = new Pretext();
+const font = await pretext.loadFont("/fonts/Inter-Regular.otf");
+
+const layout = pretext.layout({
+  text: "Thank you for your purchase. Please remit payment within 30 days.",
+  font,
+  fontSize: 12,
+  width: 500,       // available width in points
+  lineHeight: 1.4,
+});
+
+// 2. Create PDF with pdf-lib using measured positions
+const pdfDoc = await PDFDocument.create();
+const page = pdfDoc.addPage([595, 842]); // A4
+const pdfFont = await pdfDoc.embedFont(font.buffer);
+
+page.drawText("Invoice #1042", {
+  x: 50, y: 792, size: 18, font: pdfFont,
+});
+
+// Render each line at its measured position
+for (const line of layout.lines) {
+  page.drawText(line.text, {
+    x: 50, y: 750 - line.y, size: 12, font: pdfFont,
+  });
+}
+
+const bytes = await pdfDoc.save();
+download(bytes, "invoice.pdf");</code></pre>
+          <p>The two-step approach &mdash; measure then render &mdash; may look like more code at first glance. But it gives you something no other client-side library offers: you know exactly where every glyph will land before you write it to the PDF. This makes it straightforward to build features like balanced columns, widow/orphan control, and precise template alignment.</p>
+
+          <h2>When to Use Each</h2>
+
+          <h3>Choose jsPDF when:</h3>
+          <ul>
+            <li>You need a tiny bundle and your PDFs are simple (labels, barcodes, single-line text).</li>
+            <li>You do not need text wrapping, Unicode, or complex layouts.</li>
+          </ul>
+
+          <h3>Choose pdfmake when:</h3>
+          <ul>
+            <li>You want a declarative API and your documents use only Latin-script fonts.</li>
+            <li>Bundle size is not a constraint (server-side Node.js or internal tools).</li>
+            <li>You need quick-and-dirty tables without writing layout code.</li>
+          </ul>
+
+          <h3>Choose Puppeteer when:</h3>
+          <ul>
+            <li>You already have HTML templates and a server environment.</li>
+            <li>Latency of 2&ndash;5 seconds per document is acceptable.</li>
+            <li>You need full CSS support including Flexbox, Grid, and web fonts.</li>
+          </ul>
+
+          <h3>Choose TangentFlow when:</h3>
+          <ul>
+            <li>You need typographically accurate PDFs generated client-side.</li>
+            <li>Your documents include multilingual content or non-Latin scripts.</li>
+            <li>Bundle size and generation speed both matter.</li>
+            <li>You want a composable architecture that separates measurement from rendering.</li>
+            <li>You are building a product where PDF quality reflects your brand.</li>
+          </ul>
+
+          <h2>Conclusion</h2>
+          <p>Each of these tools solves a real problem. jsPDF is unmatched for simplicity. pdfmake offers the easiest path to structured documents. Puppeteer gives you the full power of CSS. But none of them solve the fundamental problem of accurate client-side text layout without significant trade-offs in size, speed, or fidelity.</p>
+          <p>TangentFlow occupies a unique position in this landscape: it delivers the typographic accuracy of a server-side approach with the speed and portability of a client-side library. By building on Pretext for measurement and pdf-lib for output, it avoids reinventing the wheel while giving developers precise control over every aspect of document layout.</p>
+          <p>If you are building a product where PDF quality matters &mdash; invoices that must match a brand template, reports with multilingual content, or documents that need to look right in every language &mdash; TangentFlow is worth evaluating.</p>
+
+          <blockquote>
+            <p>TangentFlow is currently in early access. <a href="../index.html">Sign up for the waitlist</a> to get started.</p>
+          </blockquote>
+
+        </div>
+        <footer class="post-footer">
+          <a href="../">&larr; Back to Blog</a>
+        </footer>
+      </article>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script defer src="../../js/nav.js"></script>
+</body>
+</html>

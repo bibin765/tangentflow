@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How Pretext Solves the Hardest Problem in PDF Generation — TangentFlow</title>
+  <meta name="description" content="A technical deep-dive into how Pretext measures text, segments Unicode, and produces optimal line breaks in pure JavaScript." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/tangentflow.css" />
+</head>
+<body data-page="blog" data-depth="2">
+<div id="site-nav"></div>
+<main>
+  <section class="section">
+    <div class="container-narrow">
+      <nav class="breadcrumb"><a href="../">Blog</a> / How Pretext Solves PDF Generation</nav>
+      <article class="blog-post">
+        <header style="margin-bottom:var(--space-2xl);">
+          <time class="caption">March 2026</time>
+          <h1 class="heading-lg" style="margin-top:var(--space-sm);">How Pretext Solves the Hardest Problem in PDF Generation</h1>
+          <p class="body-lg" style="margin-top:var(--space-md);">A technical deep-dive into Pretext's two-phase architecture: how it measures glyphs, segments Unicode text, and produces optimal line breaks in pure JavaScript.</p>
+        </header>
+        <div class="prose">
+
+          <h2>The Problem, Restated</h2>
+          <p>Generating a PDF sounds straightforward: place text on a page. But the moment you need to <em>wrap</em> text to fit a column, you hit a wall. To know where a line should break, you need the exact pixel width of every glyph in the string at the current font size. You need to account for kerning pairs, ligatures, and the fact that a single "character" on screen might be composed of multiple Unicode codepoints. Get any of this wrong and your text overflows, overlaps, or breaks mid-word in the wrong place.</p>
+          <p>Browsers solve this with enormously complex text shaping engines (HarfBuzz, CoreText, DirectWrite). But in a pure JavaScript environment &mdash; a Node.js server generating invoices at scale, or a browser tab building a report &mdash; you do not have access to those engines. You are on your own.</p>
+          <p>This is the problem Pretext was built to solve.</p>
+
+          <h2>How Fonts Actually Work</h2>
+          <p>A font file is not a collection of images. It is a <em>program</em>. An OpenType font contains vector outlines for each glyph, but it also contains tables of structured data that describe how those glyphs relate to one another:</p>
+          <ul>
+            <li><strong>cmap</strong> &mdash; maps Unicode codepoints to glyph IDs inside the font.</li>
+            <li><strong>hmtx</strong> &mdash; stores the <em>advance width</em> of each glyph: how far the cursor moves after drawing it.</li>
+            <li><strong>kern / GPOS</strong> &mdash; kerning tables that adjust spacing between specific glyph pairs (e.g., "AV" is drawn tighter than "AX").</li>
+            <li><strong>GSUB</strong> &mdash; substitution rules that replace sequences of glyphs with ligatures (e.g., "f" + "i" becomes the "fi" ligature).</li>
+          </ul>
+          <p>To measure the width of a string, you must parse these tables, resolve each character to a glyph ID, look up its advance width, apply kerning adjustments, and scale everything by the font size. Pretext does all of this by reading the raw font binary &mdash; no native dependencies, no system font fallback, just bytes and arithmetic.</p>
+
+          <h2>Unicode: Where <code>string.length</code> Lies to You</h2>
+          <p>JavaScript's <code>string.length</code> counts UTF-16 code units. This is almost never what you want when measuring text for layout. Consider:</p>
+
+          <h3>Emoji with ZWJ Sequences</h3>
+          <p>The "family" emoji is constructed by joining multiple emoji with Zero-Width Joiners:</p>
+<pre><code>const family = '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}\u200D\u{1F466}';
+console.log(family);           // one visible character
+console.log(family.length);    // 11 (UTF-16 code units)
+console.log([...family].length); // 7 (codepoints)</code></pre>
+          <p>One visible character. Eleven code units. Seven codepoints. For text layout, you need to treat this as a single indivisible unit &mdash; a <em>grapheme cluster</em> &mdash; and measure the width of the single glyph the font provides for it.</p>
+
+          <h3>Combining Diacriticals</h3>
+          <p>The letter "e" with an acute accent can be represented two ways: as the single codepoint U+00E9, or as "e" (U+0065) followed by a combining acute accent (U+0301). Both render identically, but <code>.length</code> returns 1 for the first and 2 for the second. A naive measurement function that iterates by <code>.length</code> would double-count the width.</p>
+
+          <h3>Ligatures</h3>
+          <p>In many serif fonts, the sequence "fi" is replaced by a single ligature glyph. The advance width of the ligature is <em>not</em> the sum of the individual "f" and "i" widths. If your measurement code does not apply GSUB substitutions, the calculated width will be wrong.</p>
+          <p>Pretext handles all of these cases. It performs proper Unicode segmentation following UAX #29 (grapheme cluster boundaries) and UAX #14 (line break opportunities), so the text is broken into units that are safe to measure and safe to break across lines.</p>
+
+          <h2>The Pretext Architecture</h2>
+          <p>Pretext uses a deliberate two-phase design that separates <strong>measurement</strong> from <strong>layout</strong>. This separation is the key insight that makes it both fast and flexible.</p>
+
+          <h3>Phase 1: <code>prepareWithSegments()</code></h3>
+          <p>The first phase takes your text and font, segments the text according to Unicode line-break rules, and measures each segment:</p>
+<pre><code>import { prepareWithSegments } from 'pretext';
+import { readFileSync } from 'fs';
+
+const fontData = readFileSync('./fonts/Inter-Regular.otf');
+
+const segments = prepareWithSegments(
+  'The quick brown fox jumps over the lazy dog.',
+  fontData,
+  { fontSize: 12 }
+);
+
+// segments is an array of measured chunks:
+// [
+//   { text: 'The ',  width: 22.14, breakable: true },
+//   { text: 'quick ', width: 30.72, breakable: true },
+//   { text: 'brown ', width: 33.48, breakable: true },
+//   ...
+// ]</code></pre>
+          <p>Each segment carries its exact measured width and a flag indicating whether a line break is permitted after it. The measurement accounts for kerning, ligatures, and grapheme clusters. The segmentation follows UAX #14, which defines where lines <em>may</em> break in Unicode text &mdash; after spaces, after hyphens, between CJK characters, and so on.</p>
+
+          <h3>Phase 2: <code>layoutWithLines()</code></h3>
+          <p>The second phase takes the measured segments and a target width, and computes optimal line breaks:</p>
+<pre><code>import { layoutWithLines } from 'pretext';
+
+const lines = layoutWithLines(segments, {
+  maxWidth: 200,
+  lineHeight: 16,
+});
+
+// lines is an array of positioned text runs:
+// [
+//   { text: 'The quick brown fox', x: 0, y: 0,   width: 118.8 },
+//   { text: 'jumps over the lazy',  x: 0, y: 16,  width: 112.4 },
+//   { text: 'dog.',                 x: 0, y: 32,  width: 22.9  },
+// ]</code></pre>
+          <p>The line-breaking algorithm minimizes raggedness across all lines, similar in spirit to the Knuth-Plass algorithm used by TeX. It does not simply fill each line greedily; it considers the paragraph as a whole to produce more even line lengths.</p>
+
+          <h3>Why Two Phases?</h3>
+          <p>The two-phase design is not just an architectural nicety. It solves a real performance problem. Measurement is expensive &mdash; it requires parsing font tables and performing glyph lookups. Layout is cheap &mdash; it is arithmetic over pre-computed widths. By separating the two, you can:</p>
+          <ul>
+            <li><strong>Re-layout at different widths without re-measuring.</strong> If a table column changes width during auto-sizing, you only run the layout phase again. The segments are unchanged.</li>
+            <li><strong>Cache segments across renders.</strong> If the same text appears in multiple documents with the same font, you measure it once.</li>
+            <li><strong>Parallelize measurement.</strong> In a server environment, you can measure all text blocks concurrently, then lay them out sequentially when final dimensions are known.</li>
+          </ul>
+
+          <h2>Integration with pdf-lib</h2>
+          <p>The coordinates returned by <code>layoutWithLines()</code> map directly onto pdf-lib's drawing API. There is no coordinate transformation or unit conversion needed:</p>
+<pre><code>import { PDFDocument, rgb } from 'pdf-lib';
+
+const pdfDoc = await PDFDocument.create();
+const page = pdfDoc.addPage([595, 842]); // A4
+const font = await pdfDoc.embedFont(fontData);
+
+const originX = 50;
+const originY = 800;
+
+for (const line of lines) {
+  page.drawText(line.text, {
+    x: originX + line.x,
+    y: originY - line.y,
+    size: 12,
+    font,
+    color: rgb(0, 0, 0),
+  });
+}</code></pre>
+          <p>Because Pretext uses the same font binary that pdf-lib embeds, the measured widths match exactly. There is no drift between what Pretext calculates and what the PDF renderer draws. This is a guarantee you cannot get from browser-based measurement approaches like Canvas <code>measureText()</code>, which use system fonts that may differ from the embedded PDF font.</p>
+
+          <h2>Real-World Results</h2>
+          <p>TangentFlow uses Pretext internally to handle some of the most challenging PDF layout scenarios our users encounter:</p>
+          <ul>
+            <li><strong>Long descriptions in table cells.</strong> Product catalogs often have cells with hundreds of words. Pretext measures the text, then TangentFlow iteratively adjusts column widths and re-runs layout until the table fits the page &mdash; without re-measuring a single glyph.</li>
+            <li><strong>Multilingual content.</strong> Invoices that mix English, Arabic, and Chinese text. Pretext's Unicode segmentation handles the different line-breaking rules for each script automatically. CJK text breaks between any two characters; Arabic text respects cursive joining.</li>
+            <li><strong>Auto-sized columns.</strong> Pretext's two-phase design makes auto-sizing practical. Measure all cell contents once, then binary-search for optimal column widths by running layout at different widths. What would be quadratic with a combined measure-and-layout approach becomes linear.</li>
+          </ul>
+          <blockquote>
+            <p>"We switched from server-side Puppeteer to Pretext and pdf-lib. Our PDF generation time dropped from 4.2 seconds to 180 milliseconds, and the output is byte-for-byte identical across platforms."</p>
+          </blockquote>
+
+          <h2>Conclusion</h2>
+          <p>Accurate text layout in PDFs has historically required either a full browser engine or deep expertise in font parsing and Unicode. Pretext collapses that complexity into two function calls. It reads font binaries directly, handles the full spectrum of Unicode edge cases, and produces coordinates you can hand straight to pdf-lib.</p>
+          <p>TangentFlow is built on this foundation. If you are generating PDFs in JavaScript &mdash; invoices, reports, catalogs, contracts &mdash; and you have ever struggled with text wrapping, column sizing, or multilingual content, <a href="../index.html">give TangentFlow a try</a>. The text layout problem is solved. You can focus on your document, not your rendering engine.</p>
+
+        </div>
+        <footer class="post-footer">
+          <a href="../">&larr; Back to Blog</a>
+        </footer>
+      </article>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script defer src="../../js/nav.js"></script>
+</body>
+</html>

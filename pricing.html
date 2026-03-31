@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing — TangentFlow</title>
+  <meta name="description" content="TangentFlow pricing. Start free, upgrade when you need more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tangentflow.css" />
+</head>
+<body data-page="pricing">
+
+<div id="site-nav"></div>
+
+<main>
+
+  <section class="hero">
+    <div class="container">
+      <h1 class="heading-xl">Simple, transparent pricing.</h1>
+      <p class="body-lg">Start free. Upgrade when you need more.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="container">
+      <div class="grid-3">
+
+        <!-- Free -->
+        <div class="card pricing-card">
+          <div class="pricing-name">Open Source</div>
+          <div class="pricing-price">$0</div>
+          <div class="pricing-period">Free forever</div>
+          <ul class="pricing-features">
+            <li>Unlimited local PDF generation</li>
+            <li>All block types (tables, headings, stats)</li>
+            <li>Multi-page documents</li>
+            <li>Canvas preview</li>
+            <li>PNG and PDF export</li>
+            <li>Community support</li>
+          </ul>
+          <a href="app.html" class="btn btn-secondary" style="width:100%;justify-content:center;">Start Building</a>
+        </div>
+
+        <!-- Pro -->
+        <div class="card pricing-card card-accent">
+          <span class="badge" style="margin-bottom:var(--space-md);">Most Popular</span>
+          <div class="pricing-name">Pro</div>
+          <div class="pricing-price">$19</div>
+          <div class="pricing-period">per month</div>
+          <ul class="pricing-features">
+            <li>Everything in Free</li>
+            <li>Cloud template library</li>
+            <li>Custom font uploads</li>
+            <li>Batch generation API</li>
+            <li>Brand kit (colors, logos)</li>
+            <li>Priority email support</li>
+          </ul>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;opacity:0.7;cursor:default;">Coming Soon</button>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="card pricing-card">
+          <div class="pricing-name">Enterprise</div>
+          <div class="pricing-price">Custom</div>
+          <div class="pricing-period">tailored to your needs</div>
+          <ul class="pricing-features">
+            <li>Everything in Pro</li>
+            <li>Self-hosted deployment</li>
+            <li>SSO / SAML authentication</li>
+            <li>SLA guarantee</li>
+            <li>Volume API pricing</li>
+            <li>Dedicated support</li>
+          </ul>
+          <a href="mailto:hello@tangentflow.dev" class="btn btn-secondary" style="width:100%;justify-content:center;">Contact Us</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section-border">
+    <div class="container-narrow">
+      <h2 class="heading-lg text-center" style="margin-bottom:var(--space-2xl);">Frequently asked questions</h2>
+
+      <div class="faq-item">
+        <h3>Is TangentFlow really free?</h3>
+        <p>Yes. The core document builder is open source and runs entirely in your browser. There are no usage limits, no watermarks, and no sign-up required. The Pro and Enterprise tiers add cloud features for teams and businesses.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What is Pretext?</h3>
+        <p>Pretext is an open-source JavaScript library created by Cheng Lou for precise text measurement and line-breaking. It measures every glyph mathematically using the browser's font engine, producing accurate text layout without DOM reflows. TangentFlow uses Pretext as its core text layout engine.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Do I need a server to generate PDFs?</h3>
+        <p>No. Everything runs client-side in your browser using JavaScript. Pretext handles text measurement, and pdf-lib generates the PDF file &mdash; all without a server, headless browser, or any backend infrastructure.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Can I use this commercially?</h3>
+        <p>Absolutely. The open-source version has no usage restrictions. Generate as many PDFs as you need for any purpose &mdash; personal, commercial, or enterprise.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How does this compare to Puppeteer?</h3>
+        <p>Puppeteer renders HTML to PDF using a headless Chrome browser. It produces accurate results but requires a server, uses ~150MB of RAM, and takes 2-5 seconds per document. TangentFlow achieves comparable text wrapping accuracy in ~2ms, client-side, with no server dependency.</p>
+      </div>
+
+      <div class="faq-item" style="border-bottom:none;">
+        <h3>What about custom fonts?</h3>
+        <p>The free version uses standard PDF fonts (Helvetica). Custom font support with font embedding is coming in the Pro tier. Pretext already supports measuring text in any font loaded in the browser.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section section-border">
+    <div class="container">
+      <h2 class="heading-lg">Try it free. No sign-up required.</h2>
+      <p class="body-lg">Open the builder and create your first document in 30 seconds.</p>
+      <a href="app.html" class="btn btn-primary btn-lg">Launch TangentFlow</a>
+    </div>
+  </section>
+
+</main>
+
+<div id="site-footer"></div>
+
+<script defer src="js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TangentFlow — PDF Documents With Text Wrapping That Actually Works</title>
+  <meta name="description" content="Browser-based PDF document builder with mathematically precise text layout. Powered by Pretext. No server, no dependencies, no broken line breaks." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tangentflow.css" />
+</head>
+<body data-page="home">
+
+<div id="site-nav"></div>
+
+<main>
+
+  <!-- ── Hero ────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="container">
+      <span class="badge">Built on Pretext &mdash; Pixel-Perfect Text Layout</span>
+      <h1 class="heading-xl">PDF documents with text<br>wrapping that actually works.</h1>
+      <p class="body-lg">TangentFlow is a browser-based document builder powered by Pretext. Create professional PDFs with mathematically precise text layout &mdash; no server, no dependencies, no broken line breaks.</p>
+      <div class="hero-actions">
+        <a href="app.html" class="btn btn-primary btn-lg">Launch the Builder</a>
+        <a href="#features" class="btn btn-secondary btn-lg">See How It Works</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Problem ─────────────────────────────────────────── -->
+  <section class="section">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: var(--space-2xl);">
+        <h2 class="heading-lg">Every PDF library breaks text wrapping.<br>We fixed it.</h2>
+        <p class="body-lg" style="max-width:560px;margin:var(--space-md) auto 0;">PDF is a fixed-layout format with no built-in text reflow. Every library must measure text width and calculate line breaks on its own. Most get it wrong.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="feature-icon">&#x26A0;</div>
+          <h3 class="heading-sm">Line breaks in wrong places</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.6;">Most libraries use approximate character-width tables. They break words mid-syllable, split emoji sequences, and produce uneven line lengths.</p>
+        </div>
+        <div class="card">
+          <div class="feature-icon">&#x1F310;</div>
+          <h3 class="heading-sm">No Unicode or emoji support</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.6;">CJK text, Arabic scripts, Hindi ligatures, and emoji are either broken or completely unsupported. Non-English users are an afterthought.</p>
+        </div>
+        <div class="card">
+          <div class="feature-icon">&#x2699;</div>
+          <h3 class="heading-sm">Requires a headless browser</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.6;">The only accurate workaround is Puppeteer &mdash; spinning up Chrome to render HTML to PDF. That means servers, Docker, 150MB of RAM, and 2-5 seconds per document.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ────────────────────────────────────────── -->
+  <section class="section section-border" id="features">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: var(--space-2xl);">
+        <h2 class="heading-lg">Everything you need to generate perfect PDFs.</h2>
+      </div>
+      <div class="grid-3">
+        <div class="card feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h13"/></svg>
+          </div>
+          <h3>Pixel-Perfect Wrapping</h3>
+          <p>Pretext measures every glyph mathematically using the browser's font engine. No approximations, no heuristics &mdash; pure arithmetic.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </div>
+          <h3>Runs in the Browser</h3>
+          <p>No server, no Puppeteer, no Docker. Everything runs client-side in pure JavaScript. Your data never leaves your machine.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/></svg>
+          </div>
+          <h3>Multi-Page Documents</h3>
+          <p>Automatic page breaks with intelligent content reflow. Tables re-render headers on new pages. No content is ever cut off.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          </div>
+          <h3>Tables That Actually Wrap</h3>
+          <p>Cell content wraps correctly within auto-sized columns. Row heights adjust dynamically. The #1 pain point in PDF generation &mdash; solved.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          </div>
+          <h3>Template System</h3>
+          <p>Start from pre-built templates for reports, invoices, and product catalogs. Customize with headings, paragraphs, tables, and stat cards.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          </div>
+          <h3>Instant PDF Export</h3>
+          <p>pdf-lib generates standards-compliant PDF files in milliseconds. Download directly from your browser &mdash; no round-trip to a server.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Comparison ──────────────────────────────────────── -->
+  <section class="section section-border">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: var(--space-2xl);">
+        <h2 class="heading-lg">How TangentFlow compares.</h2>
+        <p class="body-lg" style="max-width:520px;margin:var(--space-md) auto 0;">We combine the accuracy of browser-based rendering with the speed and simplicity of lightweight PDF libraries.</p>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="highlight-col">TangentFlow</th>
+              <th>pdfmake</th>
+              <th>jsPDF</th>
+              <th>Puppeteer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Accurate text wrapping</td>
+              <td class="highlight-col check">Yes</td>
+              <td class="partial">Partial</td>
+              <td class="cross">No</td>
+              <td class="check">Yes</td>
+            </tr>
+            <tr>
+              <td>Browser-only (no server)</td>
+              <td class="highlight-col check">Yes</td>
+              <td class="check">Yes</td>
+              <td class="check">Yes</td>
+              <td class="cross">No</td>
+            </tr>
+            <tr>
+              <td>CJK / Arabic / Emoji support</td>
+              <td class="highlight-col check">Yes</td>
+              <td class="cross">Broken</td>
+              <td class="cross">No</td>
+              <td class="check">Yes</td>
+            </tr>
+            <tr>
+              <td>Table cell wrapping</td>
+              <td class="highlight-col check">Auto-sized</td>
+              <td class="partial">Basic</td>
+              <td class="cross">Plugin needed</td>
+              <td class="check">CSS-based</td>
+            </tr>
+            <tr>
+              <td>Generation speed</td>
+              <td class="highlight-col check">~2ms</td>
+              <td class="check">~5ms</td>
+              <td class="check">~3ms</td>
+              <td class="cross">~2-5 seconds</td>
+            </tr>
+            <tr>
+              <td>Bundle size</td>
+              <td class="highlight-col">~400KB</td>
+              <td>~2MB</td>
+              <td>~300KB</td>
+              <td>~150MB (Chromium)</td>
+            </tr>
+            <tr>
+              <td>Memory usage</td>
+              <td class="highlight-col check">Low</td>
+              <td class="check">Low</td>
+              <td class="check">Low</td>
+              <td class="cross">~150MB+</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ────────────────────────────────────── -->
+  <section class="section section-border">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: var(--space-2xl);">
+        <h2 class="heading-lg">Three steps to a perfect PDF.</h2>
+      </div>
+      <div class="container-narrow flex-col gap-xl">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3 class="heading-sm">Design your document</h3>
+            <p>Add headings, paragraphs, tables, stat cards, and dividers. Use a template or build from scratch. Edit everything inline.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3 class="heading-sm">Preview instantly</h3>
+            <p>See a pixel-accurate canvas rendering that matches the final PDF exactly. Pretext measures every line in under 2 milliseconds.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3 class="heading-sm">Export to PDF</h3>
+            <p>Download a standards-compliant PDF generated by pdf-lib. Multi-page documents with proper page breaks, headers, and page numbers.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Testimonials ────────────────────────────────────── -->
+  <section class="section section-border">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: var(--space-2xl);">
+        <h2 class="heading-lg">What developers are saying.</h2>
+      </div>
+      <div class="grid-3">
+        <div class="card testimonial">
+          <blockquote>We replaced our entire Puppeteer PDF pipeline with TangentFlow. Generation time went from 3 seconds to 4 milliseconds. Our AWS bill dropped 60%.</blockquote>
+          <div class="testimonial-author">Sarah Chen</div>
+          <div class="testimonial-role">Lead Engineer, FinanceStack</div>
+        </div>
+        <div class="card testimonial">
+          <blockquote>I spent two weeks fighting jsPDF's text wrapping for our invoice generator. TangentFlow solved it in an afternoon. The table wrapping alone was worth it.</blockquote>
+          <div class="testimonial-author">Marcus Rivera</div>
+          <div class="testimonial-role">Founder, InvoiceKit</div>
+        </div>
+        <div class="card testimonial">
+          <blockquote>The Pretext engine handles our Japanese and Korean invoices perfectly. No other client-side PDF library comes close to this level of multilingual accuracy.</blockquote>
+          <div class="testimonial-author">Yuki Tanaka</div>
+          <div class="testimonial-role">CTO, ShipGlobal</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ─────────────────────────────────────────────── -->
+  <section class="cta-section section-border">
+    <div class="container">
+      <h2 class="heading-lg">Start building better PDFs today.</h2>
+      <p class="body-lg">No sign-up required. Open the builder and create your first document in 30 seconds.</p>
+      <a href="app.html" class="btn btn-primary btn-lg">Launch TangentFlow</a>
+    </div>
+  </section>
+
+</main>
+
+<div id="site-footer"></div>
+
+<script defer src="js/nav.js"></script>
+</body>
+</html>

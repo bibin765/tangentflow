@@ -1,0 +1,44 @@
+{
+  "name": "@upbrew/tangentflow",
+  "version": "0.1.1",
+  "description": "PDF document generation with pixel-perfect text wrapping. Powered by Pretext.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./flow": "./src/flow.js",
+    "./blocks": "./src/blocks.js"
+  },
+  "scripts": {
+    "test": "node test.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "keywords": [
+    "pdf",
+    "text-wrapping",
+    "pretext",
+    "document",
+    "layout",
+    "table",
+    "invoice",
+    "report"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tangentflow/core"
+  },
+  "peerDependencies": {
+    "@chenglou/pretext": ">=0.0.3"
+  },
+  "optionalDependencies": {
+    "canvas": ">=2.0.0"
+  },
+  "devDependencies": {
+    "@chenglou/pretext": "^0.0.3",
+    "canvas": "^3.2.3"
+  }
+}

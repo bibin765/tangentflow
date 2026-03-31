@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SVG Infographic Builder</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0e1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 16px 4px;
+    }
+
+    header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p { color: #484f58; font-size: 13px; margin-top: 4px; }
+
+    .app {
+      display: flex;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 12px auto;
+      padding: 0 16px 32px;
+    }
+
+    .panel {
+      width: 340px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+
+    .preview {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .preview-container {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    .section {
+      background: #161b22;
+      border-radius: 8px;
+      padding: 14px;
+      border: 1px solid #30363d;
+    }
+
+    .section h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #58a6ff;
+      margin-bottom: 10px;
+    }
+
+    label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 3px; }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      color: #c9d1d9;
+      font-size: 13px;
+      padding: 6px 8px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: #58a6ff; }
+
+    textarea { resize: vertical; min-height: 50px; }
+
+    .field { margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+
+    .row { display: flex; gap: 8px; }
+    .row > * { flex: 1; }
+
+    input[type="color"] { height: 32px; padding: 2px; cursor: pointer; }
+    input[type="range"] { accent-color: #58a6ff; padding: 0; }
+
+    .range-row { display: flex; align-items: center; gap: 6px; }
+    .range-row input { flex: 1; }
+    .range-row span { font-size: 11px; color: #484f58; min-width: 24px; text-align: right; }
+
+    .data-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 6px;
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; } }
+
+    .data-row input { flex: 1; }
+    .data-row .swatch { width: 32px; height: 28px; border-radius: 4px; cursor: pointer; border: 1px solid #30363d; flex-shrink: 0; }
+
+    .btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      padding: 7px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn:hover { background: #30363d; }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: #f85149;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover { filter: brightness(1.1); }
+
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row .btn { flex: 1; text-align: center; }
+
+    .chart-type-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .chart-type-grid button {
+      background: #0d1117;
+      border: 2px solid #30363d;
+      border-radius: 6px;
+      color: #8b949e;
+      padding: 10px 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .chart-type-grid button:hover { border-color: #58a6ff; color: #c9d1d9; }
+    .chart-type-grid button.active { border-color: #58a6ff; background: #0c2d6b; color: #58a6ff; }
+
+    .lang-bar {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .lang-bar button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      color: #8b949e;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .lang-bar button:hover { border-color: #58a6ff; color: #c9d1d9; }
+    .lang-bar button.active { background: #0c2d6b; border-color: #58a6ff; color: #58a6ff; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    @media (max-width: 800px) {
+      .app { flex-direction: column; }
+      .panel { width: 100%; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>InfoGraph</h1>
+  <p>Accessible SVG infographics with pixel-perfect multilingual text</p>
+</header>
+
+<div class="app">
+  <div class="panel">
+
+    <div class="section">
+      <h3>Chart Type</h3>
+      <div class="chart-type-grid" id="chart-types">
+        <button class="active" data-type="bar">Bar</button>
+        <button data-type="hbar">H-Bar</button>
+        <button data-type="donut">Donut</button>
+        <button data-type="progress">Progress</button>
+        <button data-type="stat">Stat Cards</button>
+        <button data-type="table">Table</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Language Presets</h3>
+      <div class="lang-bar" id="lang-bar">
+        <button class="active" data-lang="en">English</button>
+        <button data-lang="ja">Japanese</button>
+        <button data-lang="ar">Arabic</button>
+        <button data-lang="hi">Hindi</button>
+        <button data-lang="emoji">Emoji</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Title</h3>
+      <div class="field">
+        <input type="text" id="chart-title" value="Quarterly Revenue" />
+      </div>
+      <div class="field">
+        <label>Subtitle</label>
+        <input type="text" id="chart-subtitle" value="FY 2025 — All regions" />
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Data</h3>
+      <div id="data-rows"></div>
+      <button class="btn" id="add-row" style="margin-top: 8px;">+ Add Item</button>
+    </div>
+
+    <div class="section">
+      <h3>Appearance</h3>
+      <div class="row">
+        <div class="field">
+          <label>BG Color</label>
+          <input type="color" id="bg-color" value="#0d1117" />
+        </div>
+        <div class="field">
+          <label>Text Color</label>
+          <input type="color" id="text-color" value="#c9d1d9" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Font</label>
+        <select id="font-select">
+          <option value="Inter, sans-serif">Inter</option>
+          <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="Menlo, monospace">Monospace</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Width</label>
+        <div class="range-row">
+          <input type="range" id="svg-width" min="400" max="1000" value="700" />
+          <span id="svg-width-val">700</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" id="export-svg">Export SVG</button>
+      <button class="btn" id="export-png">Export PNG</button>
+    </div>
+
+  </div>
+
+  <div class="preview">
+    <div class="preview-container" id="preview"></div>
+  </div>
+</div>
+
+<script type="module">
+import { prepareWithSegments, layoutWithLines } from './node_modules/@chenglou/pretext/dist/layout.js'
+
+// ─── Palette ─────────────────────────────────────────────────────────
+const PALETTE = ['#58a6ff','#bc8cff','#f778ba','#56d364','#f0883e','#79c0ff','#ffa657','#ff7b72','#3fb950','#d2a8ff']
+
+// ─── Language presets ────────────────────────────────────────────────
+const LANG_DATA = {
+  en: {
+    title: 'Quarterly Revenue',
+    subtitle: 'FY 2025 — All regions',
+    items: [
+      { label: 'North America', value: 84 },
+      { label: 'Europe & UK', value: 67 },
+      { label: 'Asia Pacific', value: 52 },
+      { label: 'Latin America', value: 31 },
+      { label: 'Middle East & Africa', value: 19 },
+    ],
+  },
+  ja: {
+    title: '四半期収益レポート',
+    subtitle: '2025年度 — 全地域',
+    items: [
+      { label: '北アメリカ', value: 84 },
+      { label: 'ヨーロッパとイギリス', value: 67 },
+      { label: 'アジア太平洋', value: 52 },
+      { label: 'ラテンアメリカ', value: 31 },
+      { label: '中東・アフリカ', value: 19 },
+    ],
+  },
+  ar: {
+    title: 'تقرير الإيرادات الفصلية',
+    subtitle: 'السنة المالية ٢٠٢٥ — جميع المناطق',
+    items: [
+      { label: 'أمريكا الشمالية', value: 84 },
+      { label: 'أوروبا والمملكة المتحدة', value: 67 },
+      { label: 'آسيا والمحيط الهادئ', value: 52 },
+      { label: 'أمريكا اللاتينية', value: 31 },
+      { label: 'الشرق الأوسط وأفريقيا', value: 19 },
+    ],
+  },
+  hi: {
+    title: 'तिमाही राजस्व रिपोर्ट',
+    subtitle: 'वित्तीय वर्ष 2025 — सभी क्षेत्र',
+    items: [
+      { label: 'उत्तर अमेरिका', value: 84 },
+      { label: 'यूरोप और यूके', value: 67 },
+      { label: 'एशिया प्रशांत', value: 52 },
+      { label: 'लैटिन अमेरिका', value: 31 },
+      { label: 'मध्य पूर्व और अफ्रीका', value: 19 },
+    ],
+  },
+  emoji: {
+    title: '📊 Revenue Report 🚀',
+    subtitle: '💰 FY 2025 — 🌍 All Regions',
+    items: [
+      { label: '🇺🇸 North America', value: 84 },
+      { label: '🇪🇺 Europe & UK 🇬🇧', value: 67 },
+      { label: '🌏 Asia Pacific', value: 52 },
+      { label: '🌎 Latin America', value: 31 },
+      { label: '🌍 Middle East & Africa', value: 19 },
+    ],
+  },
+}
+
+// ─── State ───────────────────────────────────────────────────────────
+let chartType = 'bar'
+let currentLang = 'en'
+let dataItems = LANG_DATA.en.items.map((d, i) => ({ ...d, color: PALETTE[i % PALETTE.length] }))
+
+// ─── DOM ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id)
+const titleEl = $('chart-title')
+const subtitleEl = $('chart-subtitle')
+const bgColorEl = $('bg-color')
+const textColorEl = $('text-color')
+const fontEl = $('font-select')
+const svgWidthEl = $('svg-width')
+const svgWidthVal = $('svg-width-val')
+const dataRowsEl = $('data-rows')
+const previewEl = $('preview')
+
+// ─── Chart type buttons ──────────────────────────────────────────────
+document.querySelectorAll('#chart-types button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#chart-types button').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    chartType = btn.dataset.type
+    render()
+  })
+})
+
+// ─── Language buttons ────────────────────────────────────────────────
+document.querySelectorAll('#lang-bar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#lang-bar button').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+    currentLang = btn.dataset.lang
+    const ld = LANG_DATA[currentLang]
+    titleEl.value = ld.title
+    subtitleEl.value = ld.subtitle
+    dataItems = ld.items.map((d, i) => ({ ...d, color: PALETTE[i % PALETTE.length] }))
+    buildDataUI()
+    render()
+  })
+})
+
+// ─── Data rows UI ────────────────────────────────────────────────────
+function buildDataUI() {
+  dataRowsEl.innerHTML = ''
+  dataItems.forEach((item, i) => {
+    const row = document.createElement('div')
+    row.className = 'data-row'
+    row.innerHTML = `
+      <input type="text" value="${esc(item.label)}" data-i="${i}" data-f="label" />
+      <input type="number" value="${item.value}" style="width:60px;flex:none" data-i="${i}" data-f="value" />
+      <input type="color" class="swatch" value="${item.color}" data-i="${i}" data-f="color" />
+      <button class="btn-remove" data-i="${i}">&times;</button>
+    `
+    dataRowsEl.appendChild(row)
+  })
+  // event delegation
+  dataRowsEl.querySelectorAll('input').forEach(inp => inp.addEventListener('input', onDataChange))
+  dataRowsEl.querySelectorAll('.btn-remove').forEach(btn => btn.addEventListener('click', e => {
+    dataItems.splice(parseInt(e.target.dataset.i), 1)
+    buildDataUI()
+    render()
+  }))
+}
+
+function onDataChange(e) {
+  const i = parseInt(e.target.dataset.i)
+  const f = e.target.dataset.f
+  dataItems[i][f] = f === 'value' ? parseFloat(e.target.value) || 0 : e.target.value
+  render()
+}
+
+$('add-row').addEventListener('click', () => {
+  dataItems.push({ label: 'New Item', value: 50, color: PALETTE[dataItems.length % PALETTE.length] })
+  buildDataUI()
+  render()
+})
+
+function esc(s) { return s.replace(/"/g, '&quot;').replace(/</g, '&lt;') }
+function escXml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') }
+
+// ─── Inputs ──────────────────────────────────────────────────────────
+;[titleEl, subtitleEl, bgColorEl, textColorEl, fontEl, svgWidthEl].forEach(el =>
+  el.addEventListener('input', render)
+)
+svgWidthEl.addEventListener('input', () => { svgWidthVal.textContent = svgWidthEl.value })
+
+// ─── Pretext text layout helper ──────────────────────────────────────
+function measureText(text, font, maxWidth, lineHeight) {
+  const prepared = prepareWithSegments(text, font)
+  return layoutWithLines(prepared, maxWidth, lineHeight)
+}
+
+// Render wrapped SVG text elements with accessibility
+function svgWrappedText(text, x, y, font, fontSize, maxWidth, fill, anchor = 'start', bold = false) {
+  const fontStr = `${bold ? 'bold ' : ''}${fontSize}px ${font}`
+  const lh = fontSize * 1.3
+  const result = measureText(text, fontStr, maxWidth, lh)
+
+  let svg = ''
+  result.lines.forEach((line, i) => {
+    const ly = y + i * lh
+    svg += `<text x="${x}" y="${ly}" font-family="${escXml(font)}" font-size="${fontSize}" `
+    svg += `fill="${fill}" text-anchor="${anchor}" dominant-baseline="hanging"`
+    if (bold) svg += ` font-weight="bold"`
+    svg += ` role="presentation">${escXml(line.text)}</text>\n`
+  })
+
+  return { svg, height: result.lines.length * lh }
+}
+
+// ─── Chart renderers ─────────────────────────────────────────────────
+function render() {
+  const W = parseInt(svgWidthEl.value)
+  const bg = bgColorEl.value
+  const fg = textColorEl.value
+  const font = fontEl.value
+  const title = titleEl.value
+  const subtitle = subtitleEl.value
+  const maxVal = Math.max(...dataItems.map(d => d.value), 1)
+
+  let body = ''
+  let totalH = 0
+  const pad = 30
+
+  // Title
+  let curY = pad
+  if (title) {
+    const t = svgWrappedText(title, pad, curY, font, 22, W - pad * 2, fg, 'start', true)
+    body += t.svg
+    curY += t.height + 4
+  }
+  if (subtitle) {
+    const dimFg = blendColor(fg, bg, 0.5)
+    const t = svgWrappedText(subtitle, pad, curY, font, 13, W - pad * 2, dimFg, 'start', false)
+    body += t.svg
+    curY += t.height + 6
+  }
+  curY += 12
+
+  // Accessibility: invisible table for screen readers
+  let a11yTable = `<g role="table" aria-label="${escXml(title)}">`
+  a11yTable += `<text class="sr-only" role="row"><tspan role="columnheader">Category</tspan><tspan role="columnheader">Value</tspan></text>`
+
+  if (chartType === 'bar') {
+    const barH = 32
+    const gap = 10
+    const labelW = 140
+    const barArea = W - pad * 2 - labelW - 60
+
+    dataItems.forEach((d, i) => {
+      const y = curY + i * (barH + gap)
+      const bw = (d.value / maxVal) * barArea
+
+      // Label
+      const lbl = svgWrappedText(d.label, pad, y + 8, font, 13, labelW - 8, fg, 'start', false)
+      body += lbl.svg
+
+      // Bar
+      body += `<rect x="${pad + labelW}" y="${y}" width="${bw}" height="${barH}" rx="4" fill="${d.color}" opacity="0.9">`
+      body += `<title>${escXml(d.label)}: ${d.value}</title></rect>\n`
+
+      // Value label
+      body += `<text x="${pad + labelW + bw + 8}" y="${y + barH / 2}" font-family="${escXml(font)}" font-size="13" fill="${fg}" dominant-baseline="central">${d.value}</text>\n`
+
+      a11yTable += `<text role="row"><tspan role="cell">${escXml(d.label)}</tspan><tspan role="cell">${d.value}</tspan></text>`
+    })
+
+    curY += dataItems.length * (barH + gap) + pad
+  }
+
+  else if (chartType === 'hbar') {
+    const barH = 44
+    const gap = 14
+    const barArea = W - pad * 2 - 60
+
+    dataItems.forEach((d, i) => {
+      const y = curY + i * (barH + gap)
+      const bw = (d.value / maxVal) * barArea
+
+      // Label above bar
+      const lbl = svgWrappedText(d.label, pad, y, font, 12, barArea, blendColor(fg, bg, 0.3), 'start', false)
+      body += lbl.svg
+
+      const barY = y + lbl.height + 2
+      body += `<rect x="${pad}" y="${barY}" width="${barArea}" height="16" rx="8" fill="${bg}" stroke="${d.color}" stroke-opacity="0.2" stroke-width="1" />\n`
+      body += `<rect x="${pad}" y="${barY}" width="${bw}" height="16" rx="8" fill="${d.color}" opacity="0.85">`
+      body += `<title>${escXml(d.label)}: ${d.value}</title></rect>\n`
+
+      body += `<text x="${pad + barArea + 10}" y="${barY + 8}" font-family="${escXml(font)}" font-size="12" fill="${fg}" dominant-baseline="central" font-weight="bold">${d.value}</text>\n`
+
+      a11yTable += `<text role="row"><tspan role="cell">${escXml(d.label)}</tspan><tspan role="cell">${d.value}</tspan></text>`
+    })
+
+    curY += dataItems.length * (barH + gap) + pad
+  }
+
+  else if (chartType === 'donut') {
+    const cx = W / 2
+    const r = 100
+    const cy = curY + r + 10
+    const total = dataItems.reduce((s, d) => s + d.value, 0) || 1
+    let angle = -Math.PI / 2
+
+    dataItems.forEach((d, i) => {
+      const sweep = (d.value / total) * Math.PI * 2
+      const x1 = cx + r * Math.cos(angle)
+      const y1 = cy + r * Math.sin(angle)
+      const x2 = cx + r * Math.cos(angle + sweep)
+      const y2 = cy + r * Math.sin(angle + sweep)
+      const large = sweep > Math.PI ? 1 : 0
+
+      body += `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z" fill="${d.color}" opacity="0.9" stroke="${bg}" stroke-width="2">`
+      body += `<title>${escXml(d.label)}: ${d.value} (${Math.round(d.value/total*100)}%)</title></path>\n`
+
+      // Label line
+      const midA = angle + sweep / 2
+      const lx = cx + (r + 20) * Math.cos(midA)
+      const ly = cy + (r + 20) * Math.sin(midA)
+      const anchor = lx > cx ? 'start' : 'end'
+      const pct = Math.round(d.value / total * 100)
+      body += `<text x="${lx}" y="${ly}" font-family="${escXml(font)}" font-size="11" fill="${fg}" text-anchor="${anchor}" dominant-baseline="central">${escXml(d.label)} (${pct}%)</text>\n`
+
+      angle += sweep
+
+      a11yTable += `<text role="row"><tspan role="cell">${escXml(d.label)}</tspan><tspan role="cell">${d.value} (${pct}%)</tspan></text>`
+    })
+
+    // Donut hole
+    body += `<circle cx="${cx}" cy="${cy}" r="${r * 0.55}" fill="${bg}" />\n`
+    body += `<text x="${cx}" y="${cy - 6}" font-family="${escXml(font)}" font-size="22" fill="${fg}" text-anchor="middle" dominant-baseline="central" font-weight="bold">${total}</text>\n`
+    body += `<text x="${cx}" y="${cy + 16}" font-family="${escXml(font)}" font-size="11" fill="${blendColor(fg, bg, 0.4)}" text-anchor="middle" dominant-baseline="central">Total</text>\n`
+
+    curY = cy + r + 50
+  }
+
+  else if (chartType === 'progress') {
+    const rowH = 60
+    const gap = 16
+    const barArea = W - pad * 2
+
+    dataItems.forEach((d, i) => {
+      const y = curY + i * (rowH + gap)
+      const pct = Math.min(Math.round((d.value / maxVal) * 100), 100)
+
+      // Label + percentage on same line
+      const lbl = svgWrappedText(d.label, pad, y, font, 13, barArea - 50, fg, 'start', true)
+      body += lbl.svg
+      body += `<text x="${W - pad}" y="${y}" font-family="${escXml(font)}" font-size="13" fill="${d.color}" text-anchor="end" dominant-baseline="hanging" font-weight="bold">${pct}%</text>\n`
+
+      const barY = y + lbl.height + 6
+      // Track
+      body += `<rect x="${pad}" y="${barY}" width="${barArea}" height="12" rx="6" fill="${d.color}" opacity="0.15" />\n`
+      // Fill
+      const fillW = (d.value / maxVal) * barArea
+      body += `<rect x="${pad}" y="${barY}" width="${fillW}" height="12" rx="6" fill="${d.color}" opacity="0.9">`
+      body += `<title>${escXml(d.label)}: ${pct}%</title></rect>\n`
+
+      a11yTable += `<text role="row"><tspan role="cell">${escXml(d.label)}</tspan><tspan role="cell">${pct}%</tspan></text>`
+    })
+
+    curY += dataItems.length * (rowH + gap) + pad
+  }
+
+  else if (chartType === 'stat') {
+    const cols = Math.min(dataItems.length, 3)
+    const cardW = (W - pad * 2 - (cols - 1) * 12) / cols
+    const cardH = 100
+
+    dataItems.forEach((d, i) => {
+      const col = i % cols
+      const row = Math.floor(i / cols)
+      const x = pad + col * (cardW + 12)
+      const y = curY + row * (cardH + 12)
+
+      // Card bg
+      body += `<rect x="${x}" y="${y}" width="${cardW}" height="${cardH}" rx="8" fill="${d.color}" opacity="0.1" stroke="${d.color}" stroke-opacity="0.3" stroke-width="1" />\n`
+
+      // Value
+      body += `<text x="${x + cardW / 2}" y="${y + 36}" font-family="${escXml(font)}" font-size="28" fill="${d.color}" text-anchor="middle" dominant-baseline="central" font-weight="bold">${d.value}</text>\n`
+
+      // Label (wrapped)
+      const lbl = svgWrappedText(d.label, x + cardW / 2, y + 60, font, 12, cardW - 16, fg, 'middle', false)
+      body += lbl.svg
+
+      a11yTable += `<text role="row"><tspan role="cell">${escXml(d.label)}</tspan><tspan role="cell">${d.value}</tspan></text>`
+    })
+
+    const rows = Math.ceil(dataItems.length / cols)
+    curY += rows * (cardH + 12) + pad
+  }
+
+  else if (chartType === 'table') {
+    const colW = (W - pad * 2) / 2
+    const rowH = 34
+
+    // Header
+    body += `<rect x="${pad}" y="${curY}" width="${W - pad * 2}" height="${rowH}" rx="6" fill="${fg}" opacity="0.08" />\n`
+    body += `<text x="${pad + 12}" y="${curY + rowH / 2}" font-family="${escXml(font)}" font-size="12" fill="${fg}" dominant-baseline="central" font-weight="bold">Category</text>\n`
+    body += `<text x="${W - pad - 12}" y="${curY + rowH / 2}" font-family="${escXml(font)}" font-size="12" fill="${fg}" dominant-baseline="central" text-anchor="end" font-weight="bold">Value</text>\n`
+    curY += rowH
+
+    dataItems.forEach((d, i) => {
+      const y = curY + i * rowH
+      // Zebra stripe
+      if (i % 2 === 0) {
+        body += `<rect x="${pad}" y="${y}" width="${W - pad * 2}" height="${rowH}" fill="${fg}" opacity="0.03" />\n`
+      }
+      // Colored dot
+      body += `<circle cx="${pad + 16}" cy="${y + rowH / 2}" r="4" fill="${d.color}" />\n`
+      // Label
+      const lbl = svgWrappedText(d.label, pad + 28, y + 10, font, 13, colW - 40, fg, 'start', false)
+      body += lbl.svg
+      // Value
+      body += `<text x="${W - pad - 12}" y="${y + rowH / 2}" font-family="${escXml(font)}" font-size="13" fill="${fg}" dominant-baseline="central" text-anchor="end">${d.value}</text>\n`
+
+      // Separator
+      body += `<line x1="${pad}" y1="${y + rowH}" x2="${W - pad}" y2="${y + rowH}" stroke="${fg}" stroke-opacity="0.08" />\n`
+
+      a11yTable += `<text role="row"><tspan role="cell">${escXml(d.label)}</tspan><tspan role="cell">${d.value}</tspan></text>`
+    })
+
+    curY += dataItems.length * rowH + pad
+  }
+
+  a11yTable += '</g>'
+
+  // Footer
+  const footerY = curY
+  const footerText = 'Generated with InfoGraph — Accessible SVG Infographics'
+  body += `<text x="${W / 2}" y="${footerY}" font-family="${escXml(font)}" font-size="10" fill="${blendColor(fg, bg, 0.7)}" text-anchor="middle" dominant-baseline="hanging">${footerText}</text>\n`
+  curY = footerY + 24
+
+  const H = curY
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-labelledby="info-title info-desc">
+  <title id="info-title">${escXml(title)}</title>
+  <desc id="info-desc">${escXml(subtitle)}. Data: ${dataItems.map(d => `${d.label}: ${d.value}`).join(', ')}</desc>
+  <rect width="${W}" height="${H}" fill="${bg}" rx="12" />
+  <style>.sr-only { font-size: 0; }</style>
+  ${body}
+  ${a11yTable}
+</svg>`
+
+  previewEl.innerHTML = svg
+}
+
+// ─── Export ──────────────────────────────────────────────────────────
+$('export-svg').addEventListener('click', () => {
+  const svgEl = previewEl.querySelector('svg')
+  const blob = new Blob([svgEl.outerHTML], { type: 'image/svg+xml' })
+  download(blob, 'infographic.svg')
+})
+
+$('export-png').addEventListener('click', () => {
+  const svgEl = previewEl.querySelector('svg')
+  const data = new XMLSerializer().serializeToString(svgEl)
+  const img = new Image()
+  const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(svgBlob)
+
+  img.onload = () => {
+    const c = document.createElement('canvas')
+    c.width = img.naturalWidth * 2
+    c.height = img.naturalHeight * 2
+    const cx = c.getContext('2d')
+    cx.scale(2, 2)
+    cx.drawImage(img, 0, 0)
+    c.toBlob(blob => {
+      download(blob, 'infographic.png')
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  }
+  img.src = url
+})
+
+function download(blob, name) {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = name
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+// ─── Util ────────────────────────────────────────────────────────────
+function blendColor(fg, bg, amount) {
+  const f = hexToRgb(fg), b = hexToRgb(bg)
+  const r = Math.round(f.r + (b.r - f.r) * amount)
+  const g = Math.round(f.g + (b.g - f.g) * amount)
+  const bl = Math.round(f.b + (b.b - f.b) * amount)
+  return `rgb(${r},${g},${bl})`
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16)
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
+}
+
+// ─── Init ────────────────────────────────────────────────────────────
+buildDataUI()
+document.fonts.ready.then(render)
+render()
+</script>
+
+</body>
+</html>

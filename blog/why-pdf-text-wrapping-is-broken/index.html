@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Why PDF Text Wrapping Is Still Broken in 2026 — TangentFlow</title>
+  <meta name="description" content="Most JavaScript PDF libraries still can't wrap text correctly. Here's why the problem is harder than it looks." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/tangentflow.css" />
+</head>
+<body data-page="blog" data-depth="2">
+<div id="site-nav"></div>
+<main>
+  <section class="section">
+    <div class="container-narrow">
+      <nav class="breadcrumb"><a href="../">Blog</a> / Why PDF Text Wrapping Is Still Broken</nav>
+      <article class="blog-post">
+        <header style="margin-bottom:var(--space-2xl);">
+          <time class="caption">March 2026</time>
+          <h1 class="heading-lg" style="margin-top:var(--space-sm);">Why PDF Text Wrapping Is Still Broken in 2026</h1>
+          <p class="body-lg" style="margin-top:var(--space-md);">Most JavaScript PDF libraries still can't wrap text correctly. Here's why the problem is fundamentally harder than it looks, and what it takes to solve it properly.</p>
+        </header>
+        <div class="prose">
+
+          <h2>The Invoice That Broke Everything</h2>
+
+          <p>You have probably been here before. You are building a PDF invoice generator for your SaaS app. The line items table has a "Description" column that is 200 points wide. Everything looks fine during development because your test data is short: "Widget A," "Monthly subscription," "Setup fee." Then a real customer enters a product description like <em>"Professional consulting services for Q1 infrastructure migration and cloud deployment (includes 40 hours on-site support)"</em> and the text blows straight through the column boundary, overlapping the unit price.</p>
+
+          <p>You search for a fix. The library's documentation tells you to call <code>drawText()</code> with an x,y coordinate. There is no mention of wrapping, no mention of column constraints, no mention of overflow. You realize with a sinking feeling that the library expects <em>you</em> to figure out where to break the text.</p>
+
+          <p>This is not a bug in one library. It is a fundamental gap in nearly every JavaScript PDF generation tool available today.</p>
+
+          <h2>Why PDF Has No Layout Engine</h2>
+
+          <p>The root cause is architectural. PDF is a <em>fixed-layout</em> format. Unlike HTML, where a browser's layout engine flows text into containers, wraps at word boundaries, and reflows on resize, a PDF file contains precise instructions: draw this glyph at coordinate (72, 680), then draw this glyph at coordinate (78.4, 680), and so on. There is no concept of a "paragraph" or a "column" at the file format level.</p>
+
+          <p>When you call a function like this:</p>
+
+<pre><code>const doc = new jsPDF();
+doc.text("Professional consulting services for Q1 infrastructure migration and cloud deployment (includes 40 hours on-site support)", 20, 30);
+doc.save("invoice.pdf");</code></pre>
+
+          <p>The library writes every character on a single line starting at (20, 30). If the string is longer than the page width, the text simply runs off the edge. No wrapping. No error. Just a silently broken document.</p>
+
+          <p>To get wrapping, you have to do it yourself:</p>
+
+<pre><code>// Manual wrapping workaround in jsPDF
+const maxWidth = 180;
+const lineHeight = 7;
+const lines = doc.splitTextToSize(text, maxWidth);
+lines.forEach((line, i) => {
+  doc.text(line, 20, 30 + (i * lineHeight));
+});</code></pre>
+
+          <p>This looks reasonable until you test it with anything beyond basic Latin characters. The measurement engine behind <code>splitTextToSize</code> is where things fall apart.</p>
+
+          <h2>How Current Libraries Fail</h2>
+
+          <h3>jsPDF: Approximate Character Widths</h3>
+
+          <p>jsPDF measures text width using built-in character width tables for the 14 standard PDF fonts (Helvetica, Times, Courier, and their variants). These tables map each character code to a width value. The approach has two critical problems.</p>
+
+          <p>First, the tables only cover the Latin-1 character set. If your text contains characters outside that range&mdash;Chinese, Japanese, Korean, Arabic, Devanagari, or even accented characters from Central European languages&mdash;the measurement returns incorrect values or falls back to a default width. The text wraps at the wrong position.</p>
+
+          <p>Second, even for supported characters, the tables ignore kerning. The pair "AV" is narrower than the sum of "A" and "V" measured independently, because a well-designed font tucks the V under the A's overhang. jsPDF does not account for this. Over a long line of text, these small errors accumulate and the wrap point drifts.</p>
+
+          <h3>pdfmake: Better, But Still Simplified</h3>
+
+          <p>pdfmake improves on jsPDF by parsing actual font files (via pdfkit under the hood) and extracting glyph metrics. This gives accurate measurements for the fonts you embed. However, the line-breaking logic is simplified. It splits on whitespace and does not implement the Unicode Line Breaking Algorithm (UAX #14), which means:</p>
+
+          <ul>
+            <li>CJK text, which has no spaces between words, does not wrap correctly. This has been an open issue for years.</li>
+            <li>Languages that use zero-width spaces or other non-obvious break opportunities (Thai, Khmer) are treated as a single unbreakable token.</li>
+            <li>Hyphenation is not supported at all.</li>
+          </ul>
+
+          <p>If your users write in English only, pdfmake works. The moment your product goes international, the wrapping breaks.</p>
+
+          <h3>Puppeteer / wkhtmltopdf: Accurate but Heavy</h3>
+
+          <p>The workaround many teams reach for is to skip JavaScript PDF libraries entirely. Instead, they render HTML in a headless browser (Puppeteer with Chromium, or wkhtmltopdf with WebKit) and print to PDF. The browser's layout engine handles wrapping perfectly because that is what it was built to do.</p>
+
+          <p>The trade-offs are severe:</p>
+
+          <ul>
+            <li>You need a server. Chromium does not run in the browser or in a serverless function without significant effort.</li>
+            <li>Startup time for a headless browser is measured in seconds, not milliseconds.</li>
+            <li>Memory usage per render is 100-300 MB. At scale, this is expensive.</li>
+            <li>You lose fine-grained control over the PDF output&mdash;page breaks, headers, footers, and table splitting all require CSS hacks.</li>
+          </ul>
+
+          <blockquote>
+            <p>"We switched to Puppeteer for PDF generation and our AWS bill tripled. Each invoice took 3-4 seconds to render. We were spinning up Lambda instances with 1 GB of memory just to generate a two-page document."</p>
+          </blockquote>
+
+          <p>The browser approach trades one set of problems for another. You get correct text layout but lose performance, cost efficiency, and client-side capability.</p>
+
+          <h2>What Correct Text Wrapping Actually Requires</h2>
+
+          <p>Text wrapping is not "split the string at spaces and check if it fits." Done correctly, it requires four things that most libraries skip:</p>
+
+          <h3>1. Glyph-Level Measurement from Real Font Metrics</h3>
+
+          <p>You cannot measure text width without reading the actual font file. Each glyph in a font has a specific advance width stored in the <code>hmtx</code> table of the TrueType or OpenType file. Using approximations or default widths produces errors that compound across a line.</p>
+
+          <h3>2. Unicode Grapheme Cluster Segmentation</h3>
+
+          <p>A "character" on screen is not always a single Unicode code point. The flag emoji for a country is two code points (regional indicator symbols). An accented letter can be a base character plus a combining mark. A Devanagari syllable can be three or four code points rendered as a single visual unit. You must segment text into <em>grapheme clusters</em> (UAX #29), not code points, before measuring.</p>
+
+          <h3>3. The Unicode Line Breaking Algorithm (UAX #14)</h3>
+
+          <p>Unicode Technical Report #14 defines where line breaks are allowed, required, or prohibited in text. It covers thousands of cases: CJK characters can break between any two ideographs; a closing parenthesis cannot start a new line; a non-breaking space prohibits a break; a soft hyphen permits one. Implementing this correctly is a significant undertaking. Ignoring it means your wrapping is wrong for most of the world's languages.</p>
+
+          <h3>4. Kerning Pair Adjustments</h3>
+
+          <p>After measuring individual glyph widths, you must apply kerning adjustments from the font's <code>kern</code> table or GPOS table. Without kerning, measured line widths are slightly too wide, and lines that could fit in the available space are broken prematurely.</p>
+
+          <h2>How Pretext Approaches This Differently</h2>
+
+          <p>Pretext, the layout engine behind TangentFlow, takes a different path. Instead of reimplementing font measurement in pure JavaScript (which means parsing binary font tables and replicating years of OpenType engineering), Pretext delegates measurement to the platform that already does it correctly: the browser's font engine.</p>
+
+          <p>When Pretext needs to measure a run of text, it uses the browser's <code>Canvas</code> text measurement API with the actual font loaded in the document. The browser's text shaper handles glyph substitution, ligatures, kerning, and complex script shaping (Arabic joining, Devanagari conjuncts, CJK composition) because it already has to do all of this for rendering web pages.</p>
+
+          <p>On top of accurate measurement, Pretext implements a proper line-breaking algorithm that respects Unicode break opportunities. The result is mathematically precise text wrapping that works with any language, any font, and any Unicode content&mdash;all running client-side in the browser with no headless Chrome, no server, and no Lambda functions.</p>
+
+<pre><code>// With Pretext via TangentFlow, text wrapping just works
+const layout = pretext.layout({
+  text: description,
+  font: "Inter",
+  fontSize: 10,
+  width: 200,       // column width in points
+  lineHeight: 14
+});
+
+// layout.lines contains correctly broken lines
+// with accurate measurements for each glyph run</code></pre>
+
+          <p>The difference is not a small polish detail. It is the difference between a PDF generator that works for your English-language demo and one that works for every customer in production.</p>
+
+          <h2>The Problem Is Worth Solving</h2>
+
+          <p>Text wrapping in PDFs has been broken for so long that most developers treat it as a fact of life. They hard-code column widths, truncate long strings, or spin up headless browsers and accept the cost. None of these are real solutions.</p>
+
+          <p>If you are building a product that generates PDFs&mdash;invoices, reports, contracts, labels, certificates&mdash;your users will eventually put text in a field that does not fit. When that happens, the output should wrap correctly. Not approximately. Not only in English. Correctly.</p>
+
+          <p><a href="https://tangentflow.com">TangentFlow</a> is built on Pretext specifically to make this the default behavior. If you are tired of fighting with text layout in PDFs, <a href="https://tangentflow.com/docs">take a look at the documentation</a> and see what accurate text wrapping looks like.</p>
+
+        </div>
+        <footer class="post-footer">
+          <a href="../">&larr; Back to Blog</a>
+        </footer>
+      </article>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script defer src="../../js/nav.js"></script>
+</body>
+</html>

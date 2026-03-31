@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowPDF — Pretext + pdf-lib Document Builder</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0e1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 16px 4px;
+    }
+
+    header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f97316, #ef4444, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p { color: #484f58; font-size: 13px; margin-top: 4px; }
+
+    .app {
+      display: flex;
+      gap: 20px;
+      max-width: 1300px;
+      margin: 12px auto;
+      padding: 0 16px 32px;
+      height: calc(100vh - 90px);
+    }
+
+    .panel {
+      width: 380px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .preview {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .preview-scroll {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+    }
+
+    .page-canvas {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      border-radius: 2px;
+    }
+
+    .section {
+      background: #161b22;
+      border-radius: 8px;
+      padding: 14px;
+      border: 1px solid #30363d;
+    }
+
+    .section h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #f97316;
+      margin-bottom: 10px;
+    }
+
+    label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 3px; }
+    .field { margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      color: #c9d1d9;
+      font-size: 13px;
+      padding: 6px 8px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: #f97316; }
+    textarea { resize: vertical; min-height: 100px; font-family: 'Menlo', monospace; font-size: 12px; }
+
+    .row { display: flex; gap: 8px; }
+    .row > * { flex: 1; }
+
+    input[type="color"] { height: 32px; padding: 2px; cursor: pointer; }
+    input[type="range"] { accent-color: #f97316; padding: 0; }
+
+    .range-row { display: flex; align-items: center; gap: 6px; }
+    .range-row input { flex: 1; }
+    .range-row span { font-size: 11px; color: #484f58; min-width: 30px; text-align: right; }
+
+    .block-list { display: flex; flex-direction: column; gap: 4px; }
+
+    .block-item {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .block-item:hover { border-color: #484f58; }
+    .block-item.active { border-color: #f97316; box-shadow: 0 0 0 1px #f9731640; }
+    .block-item.drag-over { border-color: #58a6ff; border-style: dashed; }
+
+    .block-item-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+    }
+
+    .block-drag-handle {
+      cursor: grab;
+      color: #30363d;
+      font-size: 14px;
+      flex-shrink: 0;
+      user-select: none;
+      line-height: 1;
+      padding: 2px;
+    }
+
+    .block-drag-handle:hover { color: #8b949e; }
+    .block-drag-handle:active { cursor: grabbing; }
+
+    .block-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+
+    .block-icon.heading { background: #f9731625; color: #f97316; }
+    .block-icon.paragraph { background: #58a6ff25; color: #58a6ff; }
+    .block-icon.table { background: #56d36425; color: #56d364; }
+    .block-icon.spacer { background: #8b949e20; color: #8b949e; }
+    .block-icon.divider { background: #8b949e20; color: #8b949e; }
+    .block-icon.stat-row { background: #bc8cff25; color: #bc8cff; }
+
+    .block-info { flex: 1; min-width: 0; }
+
+    .block-item .block-type {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b949e;
+      line-height: 1;
+    }
+
+    .block-item .block-preview {
+      font-size: 12px;
+      color: #c9d1d9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+
+    .block-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    .block-item:hover .block-actions { opacity: 1; }
+    .block-item.active .block-actions { opacity: 1; }
+
+    .block-actions button {
+      background: none;
+      border: none;
+      color: #484f58;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      line-height: 1;
+    }
+
+    .block-actions button:hover { color: #c9d1d9; background: #21262d; }
+    .block-actions button.btn-remove-block:hover { color: #f85149; background: #f8514915; }
+
+    .block-inline-editor {
+      padding: 0 10px 10px 38px;
+      display: none;
+    }
+
+    .block-item.active .block-inline-editor { display: block; }
+
+    .block-inline-editor textarea {
+      min-height: 60px;
+      font-size: 12px;
+    }
+
+    .block-inline-editor .inline-row {
+      display: flex;
+      gap: 6px;
+      align-items: end;
+      margin-top: 6px;
+    }
+
+    .block-inline-editor .inline-row > * { flex: 1; }
+
+    .block-inline-editor .inline-field label {
+      font-size: 10px;
+      color: #484f58;
+      margin-bottom: 2px;
+    }
+
+    .block-inline-editor input,
+    .block-inline-editor select,
+    .block-inline-editor textarea {
+      font-size: 12px;
+      padding: 5px 7px;
+    }
+
+    .block-inline-editor input[type="range"] {
+      padding: 0;
+    }
+
+    .table-editor { margin-top: 6px; }
+
+    .table-editor table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .table-editor th, .table-editor td {
+      border: 1px solid #30363d;
+      padding: 0;
+    }
+
+    .table-editor th {
+      background: #21262d;
+    }
+
+    .table-editor input {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      padding: 4px 6px;
+      font-size: 11px;
+      width: 100%;
+    }
+
+    .table-editor input:focus { background: #0d1117; }
+
+    .table-editor .table-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .table-editor .table-actions button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      color: #8b949e;
+      padding: 3px 8px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .table-editor .table-actions button:hover { border-color: #58a6ff; color: #c9d1d9; }
+
+    .stat-editor { margin-top: 6px; }
+
+    .stat-card-row {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .stat-card-row input { font-size: 11px; padding: 4px 6px; }
+    .stat-card-row input.stat-label { flex: 1; }
+    .stat-card-row input.stat-value { width: 80px; flex: none; }
+
+    .stat-card-row .btn-remove-stat {
+      background: none;
+      border: none;
+      color: #f85149;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0 2px;
+    }
+
+    .add-block-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .add-block-bar button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      color: #c9d1d9;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .add-block-bar button:hover { border-color: #f97316; }
+
+    .btn-generate {
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      width: 100%;
+      padding: 11px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-generate:hover { filter: brightness(1.1); }
+
+    .btn-row { display: flex; gap: 8px; }
+    .btn-row button { flex: 1; }
+
+    .btn-secondary {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      padding: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-secondary:hover { background: #30363d; }
+
+    .block-item.dragging { opacity: 0.4; }
+
+    .stats {
+      font-size: 11px;
+      color: #484f58;
+      text-align: center;
+      padding: 4px;
+    }
+
+    .template-bar {
+      display: flex;
+      gap: 6px;
+    }
+
+    .template-bar button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      color: #8b949e;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+    }
+
+    .template-bar button:hover { border-color: #f97316; color: #c9d1d9; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>FlowPDF</h1>
+  <p>Pretext-powered text layout + pdf-lib generation — automatic page breaks, perfect wrapping</p>
+</header>
+
+<div class="app">
+  <div class="panel">
+
+    <div class="section">
+      <h3>Templates</h3>
+      <div class="template-bar">
+        <button id="tpl-report">Report</button>
+        <button id="tpl-invoice">Invoice</button>
+        <button id="tpl-multilang">Multilingual</button>
+        <button id="tpl-catalog">Catalog</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Page Setup</h3>
+      <div class="row">
+        <div class="field">
+          <label>Size</label>
+          <select id="page-size">
+            <option value="a4">A4</option>
+            <option value="letter">Letter</option>
+            <option value="legal">Legal</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Margin</label>
+          <select id="page-margin">
+            <option value="40">Narrow (40)</option>
+            <option value="60" selected>Normal (60)</option>
+            <option value="80">Wide (80)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Content Blocks</h3>
+      <div class="block-list" id="block-list"></div>
+      <div style="margin-top: 8px;">
+        <div class="add-block-bar">
+          <button data-type="heading">+ Heading</button>
+          <button data-type="paragraph">+ Paragraph</button>
+          <button data-type="table">+ Table</button>
+          <button data-type="spacer">+ Spacer</button>
+          <button data-type="divider">+ Divider</button>
+          <button data-type="stat-row">+ Stat Row</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-generate" id="btn-preview">Preview</button>
+      <button class="btn-secondary" id="btn-download">Download PDF</button>
+    </div>
+
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="preview">
+    <div class="preview-scroll" id="preview-scroll"></div>
+  </div>
+</div>
+
+<script type="module">
+import { prepareWithSegments, layoutWithLines } from './node_modules/@chenglou/pretext/dist/layout.js'
+import { PDFDocument, StandardFonts, rgb } from './node_modules/pdf-lib/dist/pdf-lib.esm.min.js'
+
+// ─── Page dimensions ─────────────────────────────────────────────────
+const PAGE_SIZES = {
+  a4: { w: 595.28, h: 841.89 },
+  letter: { w: 612, h: 792 },
+  legal: { w: 612, h: 1008 },
+}
+
+// ─── State ───────────────────────────────────────────────────────────
+let blocks = []
+let selectedBlockIndex = -1
+
+// ─── DOM ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id)
+const blockListEl = $('block-list')
+const previewScrollEl = $('preview-scroll')
+const statsEl = $('stats')
+
+// ─── Templates ───────────────────────────────────────────────────────
+const TEMPLATES = {
+  report: [
+    { type: 'heading', text: 'Q4 2025 Performance Report', level: 1 },
+    { type: 'paragraph', text: 'This report summarizes the key performance indicators across all business units for the fourth quarter of fiscal year 2025. Overall revenue grew by 23% year-over-year, driven primarily by expansion in the Asia Pacific region and strong adoption of our enterprise product tier.' },
+    { type: 'spacer', height: 10 },
+    { type: 'heading', text: 'Revenue by Region', level: 2 },
+    { type: 'table', headers: 'Region, Q3 Revenue, Q4 Revenue, Growth, Notes', rows: 'North America (United States and Canada), $12.4M, $14.1M, +13.7%, Strong enterprise adoption driven by new product launches\nEurope & United Kingdom, $8.7M, $10.2M, +17.2%, GDPR compliance improvements boosted customer confidence significantly\nAsia Pacific (Japan and Southeast Asia), $5.1M, $7.8M, +52.9%, Fastest growing region with major wins in financial services sector\nLatin America, $2.3M, $2.9M, +26.1%, New partnerships with local distributors in Brazil and Mexico\nMiddle East & Africa, $1.1M, $1.5M, +36.4%, Early stage but promising pipeline in UAE and South Africa' },
+    { type: 'spacer', height: 10 },
+    { type: 'heading', text: 'Key Highlights', level: 2 },
+    { type: 'paragraph', text: 'Enterprise tier adoption increased by 45% quarter-over-quarter, with 127 new enterprise accounts onboarded. Customer retention rate remained strong at 94.2%, up from 91.8% in Q3. The average deal size grew from $48K to $62K, reflecting successful upsell initiatives.\n\nProduct development velocity improved with 3 major feature releases shipped on schedule. Infrastructure costs were reduced by 18% through optimization efforts, improving gross margins from 71% to 74%.' },
+    { type: 'divider' },
+    { type: 'stat-row', items: 'Total Revenue: $36.5M, Growth: +23% YoY, Customers: 2847, NPS: 72' },
+    { type: 'spacer', height: 10 },
+    { type: 'heading', text: 'Outlook for Q1 2026', level: 2 },
+    { type: 'paragraph', text: 'Based on current pipeline analysis and contracted revenue, we project Q1 2026 revenue between $38M and $41M. Key initiatives include the launch of our AI-powered analytics module, expansion into the Southeast Asian market, and the rollout of our partner certification program.\n\nRisks include potential regulatory changes in the EU data privacy landscape and currency headwinds in emerging markets. The team is actively monitoring these factors and has contingency plans in place.' },
+  ],
+  invoice: [
+    { type: 'heading', text: 'INVOICE', level: 1 },
+    { type: 'stat-row', items: 'Invoice #: INV-2025-0847, Date: March 31 2025, Due: April 30 2025, Status: Pending' },
+    { type: 'spacer', height: 6 },
+    { type: 'divider' },
+    { type: 'spacer', height: 6 },
+    { type: 'heading', text: 'Bill To', level: 2 },
+    { type: 'paragraph', text: 'Acme Corporation\n123 Innovation Drive, Suite 400\nSan Francisco, CA 94105\naccounts@acme.corp' },
+    { type: 'spacer', height: 10 },
+    { type: 'heading', text: 'Items', level: 2 },
+    { type: 'table', headers: 'Description, Qty, Unit Price, Total', rows: 'Enterprise License (Annual) — Full platform access including API and analytics dashboard, 1, $24000.00, $24000.00\nPremium Support Plan with 24/7 coverage and dedicated account manager, 1, $4800.00, $4800.00\nCustom Integration Setup — REST API connector for Salesforce and HubSpot, 12 hrs, $200.00, $2400.00\nData Migration Service including historical data import and validation, 1, $1500.00, $1500.00' },
+    { type: 'spacer', height: 10 },
+    { type: 'stat-row', items: 'Subtotal: $32700.00, Tax (8.5%): $2779.50, Total Due: $35479.50' },
+    { type: 'divider' },
+    { type: 'spacer', height: 6 },
+    { type: 'paragraph', text: 'Payment terms: Net 30. Please remit payment via wire transfer to the account details provided separately. A 1.5% monthly late fee applies to overdue balances. For questions regarding this invoice, contact billing@flowpdf.dev.' },
+  ],
+  catalog: [
+    { type: 'heading', text: 'Product Catalog — Spring 2026', level: 1 },
+    { type: 'paragraph', text: 'Complete listing of available products with specifications and pricing. All items subject to availability. Volume discounts available for orders exceeding 100 units.' },
+    { type: 'spacer', height: 8 },
+    { type: 'heading', text: 'Electronics & Components', level: 2 },
+    { type: 'table', headers: 'SKU, Product Name, Description, Stock, Price', rows: 'EL-4820, Arduino Mega 2560 Rev3, Microcontroller board based on the ATmega2560 with 54 digital I/O pins and 16 analog inputs. Ideal for complex robotics and automation projects., 342, $38.50\nEL-4821, Raspberry Pi 5 (8GB), Single-board computer featuring a 2.4GHz quad-core Arm Cortex-A76 CPU with 8GB LPDDR4X RAM. Supports dual 4K displays and PCIe 2.0., 89, $80.00\nEL-4822, ESP32-S3 DevKit, Wi-Fi and Bluetooth LE development board with dual-core 240MHz processor and 512KB SRAM. Built-in USB-OTG and support for AI acceleration., 1205, $12.99\nEL-4823, OLED Display Module 1.3 inch SH1106, 128x64 pixel monochrome OLED display with I2C/SPI interface. Ultra-low power consumption suitable for battery-powered IoT devices., 567, $7.25\nEL-4824, LiPo Battery 3.7V 2000mAh, Rechargeable lithium polymer battery with built-in protection circuit. Dimensions: 50x34x10mm. Suitable for portable electronics and wearable devices., 2340, $4.50\nEL-4825, USB-C PD Charger 65W GaN, Gallium nitride fast charger supporting USB Power Delivery 3.0 and Quick Charge 4+. Triple port design with intelligent power distribution., 178, $29.99' },
+    { type: 'spacer', height: 10 },
+    { type: 'heading', text: 'Sensors & Modules', level: 2 },
+    { type: 'table', headers: 'SKU, Product Name, Description, Stock, Price', rows: 'SN-1001, BME280 Environmental Sensor, Combined temperature/humidity/barometric pressure sensor with I2C and SPI interfaces. Accuracy: ±1°C temp and ±3% humidity. Operating range: -40 to 85°C., 890, $3.99\nSN-1002, VL53L1X Time-of-Flight Sensor, Laser-based distance measurement sensor with range up to 4 meters. Programmable ROI and multiple measurement modes for advanced gesture recognition., 445, $11.50\nSN-1003, MAX30102 Pulse Oximeter & Heart Rate Monitor, Integrated pulse oximetry and heart-rate sensor module with red and infrared LEDs and photodetector. Medical-grade accuracy for wearable health devices., 623, $8.75\nSN-1004, MPU-6050 6-Axis IMU Accelerometer + Gyroscope, MEMS-based motion tracking device with 16-bit ADC for each channel. DMP for complex motion processing. I2C interface with programmable interrupt., 1560, $2.99' },
+    { type: 'divider' },
+    { type: 'paragraph', text: 'Prices shown are per-unit retail. Contact sales@catalog.example.com for wholesale pricing. All specifications subject to change without notice.' },
+  ],
+  multilang: [
+    { type: 'heading', text: 'Multilingual Document Demo', level: 1 },
+    { type: 'paragraph', text: 'This document demonstrates how Pretext handles text wrapping across different languages and scripts. Each paragraph below contains real text that wraps correctly regardless of script complexity.' },
+    { type: 'spacer', height: 8 },
+    { type: 'heading', text: 'English', level: 2 },
+    { type: 'paragraph', text: 'The quick brown fox jumps over the lazy dog. This classic pangram contains every letter of the English alphabet and serves as a standard test for font rendering and text layout systems across different platforms.' },
+    { type: 'heading', text: 'Emoji Mixed Content', level: 2 },
+    { type: 'paragraph', text: 'Performance metrics look great! Revenue is up 23% and customer satisfaction scored 4.8/5.0 this quarter. The team shipped 12 features across 3 product lines. Next quarter targets: $15M ARR and 500 new enterprise accounts.' },
+    { type: 'heading', text: 'Technical Content', level: 2 },
+    { type: 'paragraph', text: 'The API endpoint /v2/users/{id}/preferences accepts PATCH requests with a JSON body containing key-value pairs. Rate limiting is enforced at 1000 req/min per API key. Response times average 45ms at p50 and 120ms at p99. Authentication uses OAuth 2.0 with PKCE flow for public clients.' },
+    { type: 'divider' },
+    { type: 'paragraph', text: 'All text above was measured and wrapped using Pretext — pure JavaScript text layout with no DOM dependency. The PDF was generated with pdf-lib using the coordinates calculated by Pretext.' },
+  ],
+}
+
+// ─── Block management ────────────────────────────────────────────────
+function loadTemplate(name) {
+  blocks = JSON.parse(JSON.stringify(TEMPLATES[name]))
+  selectedBlockIndex = -1
+  buildBlockList()
+  generatePreview()
+}
+
+$('tpl-report').addEventListener('click', () => loadTemplate('report'))
+$('tpl-invoice').addEventListener('click', () => loadTemplate('invoice'))
+$('tpl-multilang').addEventListener('click', () => loadTemplate('multilang'))
+$('tpl-catalog').addEventListener('click', () => loadTemplate('catalog'))
+
+document.querySelectorAll('.add-block-bar button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.type
+    let block
+    switch (type) {
+      case 'heading': block = { type: 'heading', text: 'New Heading', level: 1 }; break
+      case 'paragraph': block = { type: 'paragraph', text: 'Enter your text here...' }; break
+      case 'table': block = { type: 'table', headers: 'Name, Description, Status', rows: 'Item One, A short description of the first item, Active\nItem Two, This item has a longer description that should wrap nicely within the cell boundaries, Pending' }; break
+      case 'spacer': block = { type: 'spacer', height: 20 }; break
+      case 'divider': block = { type: 'divider' }; break
+      case 'stat-row': block = { type: 'stat-row', items: 'Label: Value, Label: Value' }; break
+    }
+    blocks.push(block)
+    selectedBlockIndex = blocks.length - 1
+    buildBlockList()
+    generatePreview()
+  })
+})
+
+// ─── Block icons ─────────────────────────────────────────────────────
+const BLOCK_ICONS = {
+  heading: 'H',
+  paragraph: 'P',
+  table: 'T',
+  spacer: '↕',
+  divider: '—',
+  'stat-row': '#',
+}
+
+// ─── Drag state ──────────────────────────────────────────────────────
+let dragSrcIndex = null
+
+function buildBlockList() {
+  blockListEl.innerHTML = ''
+  blocks.forEach((b, i) => {
+    const el = document.createElement('div')
+    el.className = 'block-item' + (i === selectedBlockIndex ? ' active' : '')
+    el.draggable = true
+    el.dataset.index = i
+
+    let preview = ''
+    if (b.type === 'heading') preview = b.text
+    else if (b.type === 'paragraph') preview = b.text.slice(0, 50) + (b.text.length > 50 ? '...' : '')
+    else if (b.type === 'table') {
+      const cols = b.headers.split(',').length
+      const rows = b.rows.split('\n').filter(r => r.trim()).length
+      preview = `${cols} cols × ${rows} rows`
+    }
+    else if (b.type === 'spacer') preview = `${b.height}px spacing`
+    else if (b.type === 'divider') preview = 'Horizontal line'
+    else if (b.type === 'stat-row') {
+      const count = b.items.split(',').filter(s => s.trim()).length
+      preview = `${count} metric${count !== 1 ? 's' : ''}`
+    }
+
+    el.innerHTML = `
+      <div class="block-item-header">
+        <span class="block-drag-handle" title="Drag to reorder">⠿</span>
+        <span class="block-icon ${b.type}">${BLOCK_ICONS[b.type]}</span>
+        <div class="block-info">
+          <div class="block-type">${b.type}${b.type === 'heading' ? ' ' + b.level : ''}</div>
+          <div class="block-preview">${escHtml(preview)}</div>
+        </div>
+        <div class="block-actions">
+          <button class="btn-move-up" title="Move up">↑</button>
+          <button class="btn-move-down" title="Move down">↓</button>
+          <button class="btn-duplicate" title="Duplicate">⧉</button>
+          <button class="btn-remove-block" title="Delete">✕</button>
+        </div>
+      </div>
+      <div class="block-inline-editor" id="inline-editor-${i}"></div>
+    `
+
+    // Click to select
+    el.querySelector('.block-item-header').addEventListener('click', (e) => {
+      if (e.target.closest('.block-actions')) return
+      toggleBlock(i)
+    })
+
+    // Action buttons
+    el.querySelector('.btn-move-up').addEventListener('click', (e) => {
+      e.stopPropagation()
+      if (i > 0) { [blocks[i - 1], blocks[i]] = [blocks[i], blocks[i - 1]]; selectedBlockIndex = i - 1; buildBlockList(); generatePreview() }
+    })
+    el.querySelector('.btn-move-down').addEventListener('click', (e) => {
+      e.stopPropagation()
+      if (i < blocks.length - 1) { [blocks[i], blocks[i + 1]] = [blocks[i + 1], blocks[i]]; selectedBlockIndex = i + 1; buildBlockList(); generatePreview() }
+    })
+    el.querySelector('.btn-duplicate').addEventListener('click', (e) => {
+      e.stopPropagation()
+      blocks.splice(i + 1, 0, JSON.parse(JSON.stringify(b)))
+      selectedBlockIndex = i + 1
+      buildBlockList()
+      generatePreview()
+    })
+    el.querySelector('.btn-remove-block').addEventListener('click', (e) => {
+      e.stopPropagation()
+      blocks.splice(i, 1)
+      if (selectedBlockIndex === i) selectedBlockIndex = -1
+      else if (selectedBlockIndex > i) selectedBlockIndex--
+      buildBlockList()
+      generatePreview()
+    })
+
+    // Drag events
+    el.addEventListener('dragstart', (e) => {
+      dragSrcIndex = i
+      el.classList.add('dragging')
+      e.dataTransfer.effectAllowed = 'move'
+    })
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging')
+      dragSrcIndex = null
+      document.querySelectorAll('.block-item').forEach(item => item.classList.remove('drag-over'))
+    })
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      el.classList.add('drag-over')
+    })
+    el.addEventListener('dragleave', () => {
+      el.classList.remove('drag-over')
+    })
+    el.addEventListener('drop', (e) => {
+      e.preventDefault()
+      el.classList.remove('drag-over')
+      if (dragSrcIndex !== null && dragSrcIndex !== i) {
+        const moved = blocks.splice(dragSrcIndex, 1)[0]
+        blocks.splice(i, 0, moved)
+        selectedBlockIndex = i
+        buildBlockList()
+        generatePreview()
+      }
+    })
+
+    blockListEl.appendChild(el)
+
+    // Build inline editor if active
+    if (i === selectedBlockIndex) {
+      buildInlineEditor(b, i)
+    }
+  })
+}
+
+function toggleBlock(i) {
+  selectedBlockIndex = selectedBlockIndex === i ? -1 : i
+  buildBlockList()
+}
+
+function buildInlineEditor(block, index) {
+  const container = document.getElementById(`inline-editor-${index}`)
+  if (!container) return
+
+  switch (block.type) {
+    case 'heading':
+      container.innerHTML = `
+        <div class="inline-field"><label>Text</label><input type="text" value="${escAttr(block.text)}" data-field="text" /></div>
+        <div class="inline-row">
+          <div class="inline-field">
+            <label>Level</label>
+            <select data-field="level">
+              <option value="1" ${block.level === 1 ? 'selected' : ''}>H1 — Title (22px)</option>
+              <option value="2" ${block.level === 2 ? 'selected' : ''}>H2 — Section (16px)</option>
+              <option value="3" ${block.level === 3 ? 'selected' : ''}>H3 — Subsection (13px)</option>
+            </select>
+          </div>
+        </div>
+      `
+      container.querySelector('[data-field="text"]').addEventListener('input', (e) => {
+        block.text = e.target.value
+        container.closest('.block-item').querySelector('.block-preview').textContent = block.text
+        generatePreview()
+      })
+      container.querySelector('[data-field="level"]').addEventListener('change', (e) => {
+        block.level = parseInt(e.target.value)
+        container.closest('.block-item').querySelector('.block-type').textContent = `heading ${block.level}`
+        generatePreview()
+      })
+      break
+
+    case 'paragraph':
+      container.innerHTML = `
+        <div class="inline-field"><label>Content</label><textarea rows="4" data-field="text">${escHtml(block.text)}</textarea></div>
+      `
+      container.querySelector('[data-field="text"]').addEventListener('input', (e) => {
+        block.text = e.target.value
+        const short = block.text.slice(0, 50) + (block.text.length > 50 ? '...' : '')
+        container.closest('.block-item').querySelector('.block-preview').textContent = short
+        generatePreview()
+      })
+      break
+
+    case 'table':
+      buildTableEditor(container, block)
+      break
+
+    case 'spacer':
+      container.innerHTML = `
+        <div class="inline-field">
+          <label>Height: <span class="spacer-val">${block.height}</span>px</label>
+          <input type="range" min="4" max="80" value="${block.height}" data-field="height" />
+        </div>
+      `
+      container.querySelector('[data-field="height"]').addEventListener('input', (e) => {
+        block.height = parseInt(e.target.value)
+        container.querySelector('.spacer-val').textContent = block.height
+        container.closest('.block-item').querySelector('.block-preview').textContent = `${block.height}px spacing`
+        generatePreview()
+      })
+      break
+
+    case 'divider':
+      container.innerHTML = '<p style="font-size:11px;color:#484f58;padding:2px 0;">Renders as a horizontal line. No options needed.</p>'
+      break
+
+    case 'stat-row':
+      buildStatEditor(container, block)
+      break
+  }
+}
+
+function buildTableEditor(container, block) {
+  const headers = block.headers.split(',').map(h => h.trim())
+  const rows = block.rows.split('\n').filter(r => r.trim()).map(r => r.split(',').map(c => c.trim()))
+
+  function sync() {
+    block.headers = headers.join(', ')
+    block.rows = rows.map(r => r.join(', ')).join('\n')
+    const info = `${headers.length} cols × ${rows.length} rows`
+    container.closest('.block-item').querySelector('.block-preview').textContent = info
+    generatePreview()
+  }
+
+  function rebuild() { buildTableEditor(container, block) }
+
+  let html = '<div class="table-editor"><table>'
+  // Header row
+  html += '<tr>'
+  headers.forEach((h, ci) => {
+    html += `<th><input type="text" value="${escAttr(h)}" data-type="header" data-col="${ci}" /></th>`
+  })
+  html += '</tr>'
+  // Data rows
+  rows.forEach((row, ri) => {
+    html += '<tr>'
+    headers.forEach((_, ci) => {
+      const val = row[ci] || ''
+      html += `<td><input type="text" value="${escAttr(val)}" data-type="cell" data-row="${ri}" data-col="${ci}" /></td>`
+    })
+    html += '</tr>'
+  })
+  html += '</table>'
+  html += '<div class="table-actions">'
+  html += '<button data-act="add-row">+ Row</button>'
+  html += '<button data-act="add-col">+ Column</button>'
+  if (rows.length > 1) html += '<button data-act="del-row">- Row</button>'
+  if (headers.length > 1) html += '<button data-act="del-col">- Column</button>'
+  html += '</div></div>'
+
+  container.innerHTML = html
+
+  // Input events
+  container.querySelectorAll('input[data-type="header"]').forEach(inp => {
+    inp.addEventListener('input', () => { headers[parseInt(inp.dataset.col)] = inp.value; sync() })
+  })
+  container.querySelectorAll('input[data-type="cell"]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const ri = parseInt(inp.dataset.row), ci = parseInt(inp.dataset.col)
+      while (rows[ri].length <= ci) rows[ri].push('')
+      rows[ri][ci] = inp.value
+      sync()
+    })
+  })
+
+  // Action buttons
+  container.querySelector('[data-act="add-row"]')?.addEventListener('click', () => {
+    rows.push(headers.map(() => '')); sync(); rebuild()
+  })
+  container.querySelector('[data-act="add-col"]')?.addEventListener('click', () => {
+    headers.push('New'); rows.forEach(r => r.push('')); sync(); rebuild()
+  })
+  container.querySelector('[data-act="del-row"]')?.addEventListener('click', () => {
+    rows.pop(); sync(); rebuild()
+  })
+  container.querySelector('[data-act="del-col"]')?.addEventListener('click', () => {
+    headers.pop(); rows.forEach(r => r.pop()); sync(); rebuild()
+  })
+}
+
+function buildStatEditor(container, block) {
+  const items = block.items.split(',').map(s => s.trim()).filter(Boolean)
+
+  function sync() {
+    block.items = items.join(', ')
+    const count = items.length
+    container.closest('.block-item').querySelector('.block-preview').textContent = `${count} metric${count !== 1 ? 's' : ''}`
+    generatePreview()
+  }
+
+  function rebuild() { buildStatEditor(container, block) }
+
+  let html = '<div class="stat-editor">'
+  items.forEach((item, i) => {
+    const parts = item.split(':')
+    const label = parts[0]?.trim() || ''
+    const value = parts.slice(1).join(':').trim() || ''
+    html += `<div class="stat-card-row">
+      <input class="stat-label" type="text" value="${escAttr(label)}" placeholder="Label" data-i="${i}" data-part="label" />
+      <input class="stat-value" type="text" value="${escAttr(value)}" placeholder="Value" data-i="${i}" data-part="value" />
+      <button class="btn-remove-stat" data-i="${i}">✕</button>
+    </div>`
+  })
+  html += '<div class="table-actions"><button data-act="add-stat">+ Add Metric</button></div></div>'
+
+  container.innerHTML = html
+
+  container.querySelectorAll('.stat-label, .stat-value').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const idx = parseInt(inp.dataset.i)
+      const row = container.querySelector(`.stat-card-row:nth-child(${idx + 1})`)
+      const l = row.querySelector('.stat-label').value
+      const v = row.querySelector('.stat-value').value
+      items[idx] = v ? `${l}: ${v}` : l
+      sync()
+    })
+  })
+
+  container.querySelectorAll('.btn-remove-stat').forEach(btn => {
+    btn.addEventListener('click', () => {
+      items.splice(parseInt(btn.dataset.i), 1)
+      sync(); rebuild()
+    })
+  })
+
+  container.querySelector('[data-act="add-stat"]')?.addEventListener('click', () => {
+    items.push('Label: Value')
+    sync(); rebuild()
+  })
+}
+
+function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') }
+
+function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;') }
+
+// ─── Flow Engine ─────────────────────────────────────────────────────
+// This is the core: Pretext measures text, flow engine handles pagination
+
+function createFlowEngine(pageW, pageH, margin) {
+  const contentW = pageW - margin * 2
+  const contentH = pageH - margin * 2
+
+  const pages = [[]] // array of pages, each page is array of draw commands
+  let curPage = 0
+  let curY = 0 // relative to content top
+
+  function remainingOnPage() {
+    return contentH - curY
+  }
+
+  function newPage() {
+    pages.push([])
+    curPage++
+    curY = 0
+  }
+
+  function ensureSpace(needed) {
+    if (curY + needed > contentH) {
+      newPage()
+    }
+  }
+
+  function addDrawCmd(cmd) {
+    pages[curPage].push(cmd)
+  }
+
+  // ─── Text block: uses Pretext for measurement ────────
+  function addText(text, fontSize, fontKey, options = {}) {
+    const { bold = false, color = [0, 0, 0], lineHeightMult = 1.4, indent = 0 } = options
+    const fontStr = `${bold ? 'bold ' : ''}${fontSize}px ${fontKey === 'bold' ? 'Helvetica Bold' : 'Helvetica'}`
+    const lineHeight = fontSize * lineHeightMult
+    const maxWidth = contentW - indent
+
+    const prepared = prepareWithSegments(text, fontStr)
+    const result = layoutWithLines(prepared, maxWidth, lineHeight)
+
+    for (const line of result.lines) {
+      ensureSpace(lineHeight)
+      const absX = margin + indent
+      const absY = pageH - margin - curY - fontSize // PDF y is bottom-up
+      addDrawCmd({ type: 'text', text: line.text, x: absX, y: absY, fontSize, fontKey, color })
+      curY += lineHeight
+    }
+  }
+
+  // ─── Table (Pretext-powered per-cell wrapping) ─────────
+  function measureCellText(text, fontSize, fontKey, maxWidth) {
+    const fontStr = `${fontKey === 'bold' ? 'bold ' : ''}${fontSize}px Helvetica`
+    const lineHeight = fontSize * 1.4
+    const prepared = prepareWithSegments(text, fontStr)
+    const result = layoutWithLines(prepared, maxWidth, lineHeight)
+    return { lines: result.lines, height: result.lines.length * lineHeight, lineHeight }
+  }
+
+  function calculateColumnWidths(headers, rows, fontSize) {
+    const colCount = headers.length
+    const cellPadX = 8
+    const cellPadBoth = cellPadX * 2
+    const minColW = 40
+    const fontStr = `${fontSize}px Helvetica`
+    const boldFontStr = `bold ${fontSize}px Helvetica`
+
+    // Measure natural (unwrapped) width of every cell
+    const naturalWidths = new Array(colCount).fill(0)
+
+    headers.forEach((h, ci) => {
+      const prepared = prepareWithSegments(h.trim(), boldFontStr)
+      const result = layoutWithLines(prepared, 9999, fontSize * 1.4)
+      const w = result.lines.reduce((max, l) => Math.max(max, l.width), 0)
+      naturalWidths[ci] = Math.max(naturalWidths[ci], w + cellPadBoth)
+    })
+
+    rows.forEach(row => {
+      const cells = row.split(',')
+      cells.forEach((cell, ci) => {
+        if (ci >= colCount) return
+        const prepared = prepareWithSegments(cell.trim(), fontStr)
+        const result = layoutWithLines(prepared, 9999, fontSize * 1.4)
+        const w = result.lines.reduce((max, l) => Math.max(max, l.width), 0)
+        naturalWidths[ci] = Math.max(naturalWidths[ci], w + cellPadBoth)
+      })
+    })
+
+    const totalNatural = naturalWidths.reduce((s, w) => s + w, 0)
+
+    let colWidths
+    if (totalNatural <= contentW) {
+      // All fits — distribute extra space proportionally
+      const extra = contentW - totalNatural
+      colWidths = naturalWidths.map(w => w + (extra * (w / totalNatural)))
+    } else {
+      // Need to shrink — allocate proportionally but with minimum
+      colWidths = naturalWidths.map(w => Math.max(minColW, (w / totalNatural) * contentW))
+      // Normalize to fit contentW
+      const total = colWidths.reduce((s, w) => s + w, 0)
+      colWidths = colWidths.map(w => (w / total) * contentW)
+    }
+
+    return colWidths
+  }
+
+  function addTable(headers, rows) {
+    const fontSize = 10
+    const cellPadX = 8
+    const cellPadY = 6
+    const colCount = headers.length
+    const borderColor = [0.85, 0.85, 0.88]
+
+    // Smart column width calculation using Pretext
+    const colWidths = calculateColumnWidths(headers, rows, fontSize)
+
+    function getColX(ci) {
+      let x = margin
+      for (let i = 0; i < ci; i++) x += colWidths[i]
+      return x
+    }
+
+    // Helper: render wrapped lines top-aligned inside a cell
+    // In PDF coords: top of cell = rowY + rowH, we want text starting cellPadY below that
+    // Each line goes further down (decreasing Y in PDF)
+    function renderCellLines(m, x, rowY, rowH, fontKey, color) {
+      // Top of text area in PDF coords (high Y = top of page)
+      const topY = rowY + rowH - cellPadY - fontSize
+      m.lines.forEach((line, li) => {
+        addDrawCmd({
+          type: 'text', text: line.text, x,
+          y: topY - li * m.lineHeight,
+          fontSize, fontKey, color
+        })
+      })
+    }
+
+    // ── Render header row ──
+    function renderHeaderRow() {
+      const headerMeasurements = headers.map((h, ci) => {
+        return measureCellText(h.trim(), fontSize, 'bold', colWidths[ci] - cellPadX * 2)
+      })
+      const headerRowH = Math.max(24, ...headerMeasurements.map(m => m.height + cellPadY * 2))
+
+      ensureSpace(headerRowH)
+      const rowY = pageH - margin - curY - headerRowH
+
+      // Header background
+      addDrawCmd({ type: 'rect', x: margin, y: rowY, w: contentW, h: headerRowH, color: [0.92, 0.92, 0.95] })
+
+      // Header cell text (wrapped)
+      headers.forEach((h, ci) => {
+        const m = headerMeasurements[ci]
+        const x = getColX(ci) + cellPadX
+        renderCellLines(m, x, rowY, headerRowH, 'bold', [0.12, 0.12, 0.18])
+
+        // Column separator
+        if (ci > 0) {
+          const sepX = getColX(ci)
+          addDrawCmd({ type: 'line', x1: sepX, y1: rowY, x2: sepX, y2: rowY + headerRowH, color: borderColor })
+        }
+      })
+
+      // Bottom border
+      addDrawCmd({ type: 'line', x1: margin, y1: rowY, x2: margin + contentW, y2: rowY, color: borderColor })
+
+      curY += headerRowH
+    }
+
+    // Render header initially
+    renderHeaderRow()
+
+    // ── Render data rows with per-cell wrapping ──
+    rows.forEach((row, ri) => {
+      const cells = row.split(',')
+
+      // Measure ALL cells in this row to find tallest
+      const cellMeasurements = []
+      for (let ci = 0; ci < colCount; ci++) {
+        const text = (cells[ci] || '').trim()
+        const m = measureCellText(text, fontSize, 'regular', colWidths[ci] - cellPadX * 2)
+        cellMeasurements.push(m)
+      }
+
+      const rowH = Math.max(22, ...cellMeasurements.map(m => m.height + cellPadY * 2))
+
+      // Check if we need a new page
+      if (curY + rowH > contentH) {
+        newPage()
+        // Re-render header on new page
+        renderHeaderRow()
+      }
+
+      const rowY = pageH - margin - curY - rowH
+
+      // Zebra stripe
+      if (ri % 2 === 0) {
+        addDrawCmd({ type: 'rect', x: margin, y: rowY, w: contentW, h: rowH, color: [0.97, 0.97, 0.98] })
+      }
+
+      // Cell content (wrapped text)
+      for (let ci = 0; ci < colCount; ci++) {
+        const m = cellMeasurements[ci]
+        const x = getColX(ci) + cellPadX
+        renderCellLines(m, x, rowY, rowH, 'regular', [0.2, 0.2, 0.25])
+
+        // Column separator
+        if (ci > 0) {
+          const sepX = getColX(ci)
+          addDrawCmd({ type: 'line', x1: sepX, y1: rowY, x2: sepX, y2: rowY + rowH, color: borderColor })
+        }
+      }
+
+      // Row bottom border
+      addDrawCmd({ type: 'line', x1: margin, y1: rowY, x2: margin + contentW, y2: rowY, color: [0.9, 0.9, 0.92] })
+
+      curY += rowH
+    })
+
+    // Table bottom border
+    const bottomY = pageH - margin - curY
+    addDrawCmd({ type: 'line', x1: margin, y1: bottomY, x2: margin + contentW, y2: bottomY, color: borderColor })
+  }
+
+  // ─── Divider ────────────────────────────────────────────
+  function addDivider() {
+    ensureSpace(12)
+    const y = pageH - margin - curY - 6
+    addDrawCmd({ type: 'line', x1: margin, y1: y, x2: margin + contentW, y2: y, color: [0.8, 0.8, 0.82] })
+    curY += 12
+  }
+
+  // ─── Spacer ─────────────────────────────────────────────
+  function addSpacer(h) {
+    curY += h
+    if (curY > contentH) newPage()
+  }
+
+  // ─── Stat row ───────────────────────────────────────────
+  function addStatRow(items) {
+    const cardH = 50
+    ensureSpace(cardH + 8)
+
+    const gap = 8
+    const cardW = (contentW - (items.length - 1) * gap) / items.length
+    const baseY = pageH - margin - curY - cardH
+
+    items.forEach((item, i) => {
+      const x = margin + i * (cardW + gap)
+      const parts = item.split(':')
+      const label = parts[0]?.trim() || ''
+      const value = parts.slice(1).join(':').trim() || ''
+
+      addDrawCmd({ type: 'rect', x, y: baseY, w: cardW, h: cardH, color: [0.94, 0.94, 0.97], radius: 4 })
+      addDrawCmd({ type: 'text', text: value, x: x + cardW / 2, y: baseY + cardH - 18, fontSize: 14, fontKey: 'bold', color: [0.15, 0.15, 0.2], align: 'center' })
+      addDrawCmd({ type: 'text', text: label, x: x + cardW / 2, y: baseY + 8, fontSize: 8, fontKey: 'regular', color: [0.45, 0.45, 0.5], align: 'center' })
+    })
+    curY += cardH + 8
+  }
+
+  // ─── Page numbers ────────────────────────────────────────
+  function addPageNumbers() {
+    const total = pages.length
+    pages.forEach((cmds, pi) => {
+      cmds.push({
+        type: 'text', text: `${pi + 1} / ${total}`,
+        x: pageW / 2, y: 24, fontSize: 9, fontKey: 'regular',
+        color: [0.6, 0.6, 0.65], align: 'center'
+      })
+    })
+  }
+
+  return { addText, addTable, addDivider, addSpacer, addStatRow, addPageNumbers, pages, getMetrics: () => ({ pageCount: pages.length, contentW, contentH }) }
+}
+
+// ─── Process blocks through flow engine ──────────────────────────────
+function processBlocks(blocks, pageW, pageH, margin) {
+  const flow = createFlowEngine(pageW, pageH, margin)
+
+  for (const block of blocks) {
+    switch (block.type) {
+      case 'heading': {
+        const sizes = { 1: 22, 2: 16, 3: 13 }
+        const fs = sizes[block.level] || 16
+        flow.addSpacer(block.level === 1 ? 4 : 10)
+        flow.addText(block.text, fs, 'bold', { bold: true, color: [0.1, 0.1, 0.12], lineHeightMult: 1.3 })
+        flow.addSpacer(4)
+        break
+      }
+      case 'paragraph': {
+        // Split by \n for hard breaks
+        const paragraphs = block.text.split('\n')
+        paragraphs.forEach((p, i) => {
+          if (p.trim()) {
+            flow.addText(p, 11, 'regular', { color: [0.25, 0.25, 0.3], lineHeightMult: 1.5 })
+          }
+          if (i < paragraphs.length - 1) flow.addSpacer(8)
+        })
+        flow.addSpacer(4)
+        break
+      }
+      case 'table': {
+        const headers = block.headers.split(',')
+        const rows = block.rows.split('\n').filter(r => r.trim())
+        flow.addTable(headers, rows)
+        flow.addSpacer(8)
+        break
+      }
+      case 'spacer':
+        flow.addSpacer(block.height)
+        break
+      case 'divider':
+        flow.addDivider()
+        break
+      case 'stat-row': {
+        const items = block.items.split(',').map(s => s.trim()).filter(Boolean)
+        flow.addStatRow(items)
+        break
+      }
+    }
+  }
+
+  flow.addPageNumbers()
+  return flow
+}
+
+// ─── Canvas preview ──────────────────────────────────────────────────
+function generatePreview() {
+  const pageSize = PAGE_SIZES[$('page-size').value]
+  const margin = parseInt($('page-margin').value)
+  const scale = 0.85
+
+  const t0 = performance.now()
+  const flow = processBlocks(blocks, pageSize.w, pageSize.h, margin)
+  const layoutMs = (performance.now() - t0).toFixed(1)
+
+  previewScrollEl.innerHTML = ''
+
+  flow.pages.forEach((cmds, pi) => {
+    const canvas = document.createElement('canvas')
+    canvas.className = 'page-canvas'
+    canvas.width = pageSize.w * 2
+    canvas.height = pageSize.h * 2
+    canvas.style.width = `${pageSize.w * scale}px`
+    canvas.style.height = `${pageSize.h * scale}px`
+
+    const ctx = canvas.getContext('2d')
+    ctx.scale(2, 2)
+
+    // White page
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, pageSize.w, pageSize.h)
+
+    // Render commands
+    for (const cmd of cmds) {
+      if (cmd.type === 'text') {
+        const weight = cmd.fontKey === 'bold' ? 'bold ' : ''
+        ctx.font = `${weight}${cmd.fontSize}px Helvetica, Arial, sans-serif`
+        ctx.fillStyle = `rgb(${cmd.color.map(c => Math.round(c * 255)).join(',')})`
+        ctx.textBaseline = 'top'
+        if (cmd.align === 'center') {
+          ctx.textAlign = 'center'
+        } else {
+          ctx.textAlign = 'left'
+        }
+        // PDF y is bottom-up, canvas is top-down
+        const canvasY = pageSize.h - cmd.y - cmd.fontSize
+        ctx.fillText(cmd.text, cmd.x, canvasY)
+        ctx.textAlign = 'left'
+      } else if (cmd.type === 'rect') {
+        ctx.fillStyle = `rgb(${cmd.color.map(c => Math.round(c * 255)).join(',')})`
+        const canvasY = pageSize.h - cmd.y - cmd.h
+        if (cmd.radius) {
+          roundRect(ctx, cmd.x, canvasY, cmd.w, cmd.h, cmd.radius)
+          ctx.fill()
+        } else {
+          ctx.fillRect(cmd.x, canvasY, cmd.w, cmd.h)
+        }
+      } else if (cmd.type === 'line') {
+        ctx.strokeStyle = `rgb(${cmd.color.map(c => Math.round(c * 255)).join(',')})`
+        ctx.lineWidth = cmd.lineWidth || 0.5
+        ctx.beginPath()
+        ctx.moveTo(cmd.x1, pageSize.h - cmd.y1)
+        ctx.lineTo(cmd.x2, pageSize.h - cmd.y2)
+        ctx.stroke()
+      }
+    }
+
+    previewScrollEl.appendChild(canvas)
+  })
+
+  const metrics = flow.getMetrics()
+  statsEl.textContent = `${metrics.pageCount} page${metrics.pageCount > 1 ? 's' : ''} — layout: ${layoutMs}ms — powered by Pretext + pdf-lib`
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.lineTo(x + w - r, y)
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+  ctx.lineTo(x + w, y + h - r)
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+  ctx.lineTo(x + r, y + h)
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+  ctx.lineTo(x, y + r)
+  ctx.quadraticCurveTo(x, y, x + r, y)
+  ctx.closePath()
+}
+
+// ─── PDF generation ──────────────────────────────────────────────────
+async function generatePDF() {
+  const pageSize = PAGE_SIZES[$('page-size').value]
+  const margin = parseInt($('page-margin').value)
+
+  const flow = processBlocks(blocks, pageSize.w, pageSize.h, margin)
+
+  const pdfDoc = await PDFDocument.create()
+  const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+  for (const cmds of flow.pages) {
+    const page = pdfDoc.addPage([pageSize.w, pageSize.h])
+
+    for (const cmd of cmds) {
+      if (cmd.type === 'text') {
+        const font = cmd.fontKey === 'bold' ? fontBold : fontRegular
+        const options = {
+          x: cmd.x,
+          y: cmd.y,
+          size: cmd.fontSize,
+          font,
+          color: rgb(cmd.color[0], cmd.color[1], cmd.color[2]),
+        }
+
+        if (cmd.align === 'center') {
+          const textWidth = font.widthOfTextAtSize(cmd.text, cmd.fontSize)
+          options.x = cmd.x - textWidth / 2
+        }
+
+        page.drawText(cmd.text, options)
+      } else if (cmd.type === 'rect') {
+        page.drawRectangle({
+          x: cmd.x,
+          y: cmd.y,
+          width: cmd.w,
+          height: cmd.h,
+          color: rgb(cmd.color[0], cmd.color[1], cmd.color[2]),
+          borderWidth: 0,
+        })
+      } else if (cmd.type === 'line') {
+        page.drawLine({
+          start: { x: cmd.x1, y: cmd.y1 },
+          end: { x: cmd.x2, y: cmd.y2 },
+          color: rgb(cmd.color[0], cmd.color[1], cmd.color[2]),
+          thickness: 0.5,
+        })
+      }
+    }
+  }
+
+  const pdfBytes = await pdfDoc.save()
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'document.pdf'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// ─── Event listeners ─────────────────────────────────────────────────
+$('btn-preview').addEventListener('click', generatePreview)
+$('btn-download').addEventListener('click', generatePDF)
+$('page-size').addEventListener('change', generatePreview)
+$('page-margin').addEventListener('change', generatePreview)
+
+// ─── Init ────────────────────────────────────────────────────────────
+loadTemplate('report')
+</script>
+
+</body>
+</html>

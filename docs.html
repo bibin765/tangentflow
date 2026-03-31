@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation — TangentFlow</title>
+  <meta name="description" content="Complete documentation for TangentFlow — block types, API reference, templates, and integration guide." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tangentflow.css" />
+</head>
+<body data-page="docs">
+
+<div id="site-nav"></div>
+
+<main>
+  <section class="section" style="padding-top:var(--space-xl);">
+    <div class="container-wide">
+      <div class="docs-layout">
+
+        <!-- Sidebar -->
+        <aside class="docs-sidebar">
+          <ul>
+            <li class="sidebar-section">Getting Started</li>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#quick-start">Quick Start</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+
+            <li class="sidebar-section">Block Types</li>
+            <li><a href="#block-image">Image</a></li>
+            <li><a href="#block-heading">Heading</a></li>
+            <li><a href="#block-paragraph">Paragraph</a></li>
+            <li><a href="#block-bullet-list">Bullet List</a></li>
+            <li><a href="#block-numbered-list">Numbered List</a></li>
+            <li><a href="#block-quote">Quote / Callout</a></li>
+            <li><a href="#block-table">Table</a></li>
+            <li><a href="#block-key-value">Key-Value</a></li>
+            <li><a href="#block-two-column">Two Column</a></li>
+            <li><a href="#block-stat-row">Stat Row</a></li>
+            <li><a href="#block-divider">Divider</a></li>
+            <li><a href="#block-spacer">Spacer</a></li>
+            <li><a href="#block-page-break">Page Break</a></li>
+
+            <li class="sidebar-section">Features</li>
+            <li><a href="#inline-formatting">Inline Formatting</a></li>
+            <li><a href="#header-footer">Header &amp; Footer</a></li>
+            <li><a href="#watermark">Watermark</a></li>
+            <li><a href="#colors">Document Colors</a></li>
+            <li><a href="#metadata">PDF Metadata</a></li>
+            <li><a href="#page-setup">Page Setup</a></li>
+
+            <li class="sidebar-section">API Reference</li>
+            <li><a href="#json-schema">JSON Schema</a></li>
+            <li><a href="#pretext-api">Pretext API</a></li>
+            <li><a href="#pdf-lib-integration">pdf-lib Integration</a></li>
+
+            <li class="sidebar-section">Templates</li>
+            <li><a href="#templates">Built-in Templates</a></li>
+          </ul>
+        </aside>
+
+        <!-- Content -->
+        <div class="docs-content">
+          <div class="prose">
+
+            <!-- ── Getting Started ──────────────────────────── -->
+            <h1 class="heading-lg" id="overview" style="margin-top:0;">Documentation</h1>
+            <p>TangentFlow is a browser-based document builder that generates professional PDFs with mathematically precise text layout. It combines <a href="https://github.com/chenglou/pretext">Pretext</a> for text measurement and <a href="https://github.com/Hopding/pdf-lib">pdf-lib</a> for PDF generation.</p>
+            <p>Everything runs client-side in your browser. No server, no dependencies, no data leaves your machine.</p>
+
+            <h2 id="quick-start">Quick Start</h2>
+            <ol>
+              <li>Open the <a href="app.html">Document Builder</a></li>
+              <li>Choose a template (Report, Invoice, Resume, etc.) or start from scratch</li>
+              <li>Add content blocks using the <strong>+ buttons</strong> in the block bar</li>
+              <li>Click any block to expand its inline editor</li>
+              <li>The canvas preview updates in real-time as you edit</li>
+              <li>Click <strong>Download PDF</strong> to export</li>
+            </ol>
+
+            <h2 id="architecture">Architecture</h2>
+            <p>TangentFlow uses a three-layer architecture:</p>
+<pre><code>Your content (blocks)
+      |
+  Pretext (measures text, calculates line breaks)
+      |
+  Flow Engine (paginates, places elements, handles page breaks)
+      |
+  Renderer (Canvas for preview, pdf-lib for export)</code></pre>
+            <p>The <strong>Flow Engine</strong> converts your block list into a sequence of draw commands (text, rect, line, image) positioned in PDF coordinate space. These commands are rendered identically to both the canvas preview and the PDF output, ensuring what you see is exactly what you get.</p>
+
+            <!-- ── Block Types ──────────────────────────────── -->
+            <h2 id="block-image">Image</h2>
+            <p>Upload a PNG or JPEG image. Configure width (in points) and alignment (left, center, right). Images maintain their aspect ratio and are embedded directly in the PDF.</p>
+<pre><code>{
+  "type": "image",
+  "src": "data:image/png;base64,...",
+  "width": 200,
+  "align": "center"
+}</code></pre>
+
+            <h2 id="block-heading">Heading</h2>
+            <p>Three heading levels with decreasing font sizes. Headings render in bold and are used by the flow engine to add appropriate spacing.</p>
+            <table>
+              <tr><th>Level</th><th>Font Size</th><th>Use Case</th></tr>
+              <tr><td>H1</td><td>22pt</td><td>Document title</td></tr>
+              <tr><td>H2</td><td>16pt</td><td>Section heading</td></tr>
+              <tr><td>H3</td><td>13pt</td><td>Subsection heading</td></tr>
+            </table>
+<pre><code>{
+  "type": "heading",
+  "text": "Quarterly Report",
+  "level": 1
+}</code></pre>
+
+            <h2 id="block-paragraph">Paragraph</h2>
+            <p>Body text with automatic Pretext-powered line wrapping. Supports hard line breaks with <code>\n</code> and inline formatting (see <a href="#inline-formatting">Inline Formatting</a>).</p>
+<pre><code>{
+  "type": "paragraph",
+  "text": "This has **bold**, *italic*, and __underlined__ text."
+}</code></pre>
+
+            <h2 id="block-bullet-list">Bullet List</h2>
+            <p>Unordered list with bullet markers. Each item is independently wrapped by Pretext. Items are separated by newlines.</p>
+<pre><code>{
+  "type": "bullet-list",
+  "items": "First item\nSecond item with longer text that wraps\nThird item"
+}</code></pre>
+
+            <h2 id="block-numbered-list">Numbered List</h2>
+            <p>Ordered list with auto-incrementing numbers. Same wrapping behavior as bullet lists.</p>
+<pre><code>{
+  "type": "numbered-list",
+  "items": "First step\nSecond step\nThird step"
+}</code></pre>
+
+            <h2 id="block-quote">Quote / Callout</h2>
+            <p>A block quote with a colored left bar. Useful for callouts, notes, or attributed quotations. The bar color is controlled by the <strong>Quote Bar</strong> color in Document Style.</p>
+<pre><code>{
+  "type": "quote",
+  "text": "The only way to do great work is to love what you do.",
+  "attribution": "Steve Jobs"
+}</code></pre>
+
+            <h2 id="block-table">Table</h2>
+            <p>The most powerful block type. Tables feature:</p>
+            <ul>
+              <li><strong>Per-cell text wrapping</strong> — every cell's content is measured by Pretext and wrapped within its column</li>
+              <li><strong>Auto-sized columns</strong> — column widths are calculated based on content, distributed proportionally</li>
+              <li><strong>Dynamic row heights</strong> — rows expand to fit their tallest cell</li>
+              <li><strong>Header repeat</strong> — when a table spans multiple pages, headers re-render automatically</li>
+              <li><strong>Zebra striping</strong> — alternating row backgrounds for readability</li>
+            </ul>
+            <p>The inline editor shows a compact 3-row preview. Click <strong>Expand Editor</strong> to open the full spreadsheet-like modal with keyboard navigation (Tab, Enter, Arrow keys).</p>
+<pre><code>{
+  "type": "table",
+  "headers": "Name, Description, Price",
+  "rows": "Widget, A useful widget for all purposes, $9.99\nGadget, An advanced gadget with features, $19.99"
+}</code></pre>
+
+            <h2 id="block-key-value">Key-Value</h2>
+            <p>Displays label-value pairs in a clean list format with separator lines. Ideal for metadata, contact info, document properties, or billing details.</p>
+<pre><code>{
+  "type": "key-value",
+  "items": "Client: Acme Corp\nProject: Website Redesign\nDeadline: April 30 2026\nStatus: In Progress"
+}</code></pre>
+
+            <h2 id="block-two-column">Two Column</h2>
+            <p>Side-by-side text blocks, each independently wrapped to half the content width. Useful for comparisons, contact details, signature areas, or compact layouts.</p>
+<pre><code>{
+  "type": "two-column",
+  "left": "Left column content here.",
+  "right": "Right column content here."
+}</code></pre>
+
+            <h2 id="block-stat-row">Stat Row</h2>
+            <p>Horizontal row of metric cards. Each card displays a label above and a bold value below, rendered inside a rounded rectangle. Auto-sizes to fit the available width.</p>
+<pre><code>{
+  "type": "stat-row",
+  "items": "Revenue: $36.5M, Growth: +23%, Customers: 2847"
+}</code></pre>
+
+            <h2 id="block-divider">Divider</h2>
+            <p>A horizontal line spanning the content width. Color is controlled by the <strong>Divider</strong> color setting.</p>
+<pre><code>{ "type": "divider" }</code></pre>
+
+            <h2 id="block-spacer">Spacer</h2>
+            <p>Adds vertical spacing between blocks. Adjustable height via a slider (4-80px).</p>
+<pre><code>{
+  "type": "spacer",
+  "height": 20
+}</code></pre>
+
+            <h2 id="block-page-break">Page Break</h2>
+            <p>Forces all subsequent content onto a new page. Useful for separating sections in multi-page documents.</p>
+<pre><code>{ "type": "page-break" }</code></pre>
+
+            <!-- ── Features ─────────────────────────────────── -->
+            <h2 id="inline-formatting">Inline Formatting</h2>
+            <p>Paragraphs support markdown-like inline formatting that renders with the correct fonts in both the canvas preview and the exported PDF:</p>
+            <table>
+              <tr><th>Syntax</th><th>Result</th><th>PDF Font</th></tr>
+              <tr><td><code>**bold text**</code></td><td><strong>bold text</strong></td><td>Helvetica Bold</td></tr>
+              <tr><td><code>*italic text*</code></td><td><em>italic text</em></td><td>Helvetica Oblique</td></tr>
+              <tr><td><code>__underlined__</code></td><td><u>underlined</u></td><td>Helvetica + underline</td></tr>
+              <tr><td><code>[link](url)</code></td><td><a href="#">link</a></td><td>Accent color + underline + clickable</td></tr>
+            </table>
+            <p>Formatting can be mixed within a single paragraph. Line-breaking is handled by Pretext on the plain text, then formatting is overlaid per character range.</p>
+
+            <h2 id="header-footer">Header &amp; Footer</h2>
+            <p>Configure repeating headers and footers that appear on every page of the document.</p>
+            <table>
+              <tr><th>Element</th><th>Description</th></tr>
+              <tr><td><strong>Header Logo</strong></td><td>Upload a PNG/JPEG image displayed at the top-left of every page</td></tr>
+              <tr><td><strong>Header Left</strong></td><td>Text next to the logo (e.g. company name)</td></tr>
+              <tr><td><strong>Header Right</strong></td><td>Right-aligned text (e.g. document title, date)</td></tr>
+              <tr><td><strong>Footer Left</strong></td><td>Left-aligned text (e.g. "Confidential")</td></tr>
+              <tr><td><strong>Footer Right</strong></td><td>Auto page numbers ("Page 1 of 3"), custom text, or none</td></tr>
+            </table>
+            <p>The content area automatically shrinks to accommodate header and footer space.</p>
+
+            <h2 id="watermark">Watermark</h2>
+            <p>Add a diagonal text watermark across every page. Configure:</p>
+            <ul>
+              <li><strong>Text</strong> — e.g. "DRAFT", "CONFIDENTIAL", "SAMPLE"</li>
+              <li><strong>Color</strong> — any color via the color picker</li>
+              <li><strong>Opacity</strong> — 0-100% via the slider</li>
+            </ul>
+            <p>The watermark renders behind all content in both the preview and the exported PDF.</p>
+
+            <h2 id="colors">Document Colors</h2>
+            <p>Nine customizable color channels control the entire document palette:</p>
+            <table>
+              <tr><th>Color</th><th>Affects</th></tr>
+              <tr><td><strong>Heading</strong></td><td>H1/H2/H3 text, table header text, stat card values</td></tr>
+              <tr><td><strong>Body Text</strong></td><td>Paragraphs, list items, table cells, two-column text, quote text</td></tr>
+              <tr><td><strong>Accent</strong></td><td>Link text color</td></tr>
+              <tr><td><strong>Table Header</strong></td><td>Background fill of table header rows</td></tr>
+              <tr><td><strong>Table Stripe</strong></td><td>Background fill of alternating table rows</td></tr>
+              <tr><td><strong>Divider</strong></td><td>Horizontal rules, table borders, key-value separators</td></tr>
+              <tr><td><strong>Quote Bar</strong></td><td>Left accent bar on quote/callout blocks</td></tr>
+              <tr><td><strong>Stat Card BG</strong></td><td>Background fill of stat row cards</td></tr>
+              <tr><td><strong>Muted Text</strong></td><td>Bullet markers, labels, attribution, page numbers</td></tr>
+            </table>
+
+            <h2 id="metadata">PDF Metadata</h2>
+            <p>Set document properties that are embedded in the PDF file:</p>
+            <ul>
+              <li><strong>Title</strong> — appears in PDF reader title bars and search indexes</li>
+              <li><strong>Author</strong> — document author name</li>
+              <li><strong>Subject</strong> — document subject or description</li>
+            </ul>
+            <p>Additionally, <code>Creator</code> and <code>Producer</code> are automatically set to "TangentFlow".</p>
+
+            <h2 id="page-setup">Page Setup</h2>
+            <table>
+              <tr><th>Option</th><th>Values</th></tr>
+              <tr><td><strong>Size</strong></td><td>A4 (595 x 842pt), Letter (612 x 792pt), Legal (612 x 1008pt)</td></tr>
+              <tr><td><strong>Orientation</strong></td><td>Portrait or Landscape (swaps width/height)</td></tr>
+              <tr><td><strong>Margin</strong></td><td>Narrow (40pt), Normal (60pt), Wide (80pt)</td></tr>
+            </table>
+
+            <!-- ── API Reference ────────────────────────────── -->
+            <h2 id="json-schema">JSON Schema</h2>
+            <p>Every TangentFlow document is represented as a JSON array of blocks. This schema is what the future <code>@tangentflow/core</code> npm library will accept as input.</p>
+<pre><code>{
+  "page": {
+    "size": "a4",
+    "orientation": "portrait",
+    "margin": 60
+  },
+  "style": {
+    "heading": "#1a1820",
+    "body": "#404050",
+    "accent": "#5c7a64",
+    "tableHeader": "#ebebf0",
+    "tableStripe": "#f8f8fa",
+    "divider": "#cccccc",
+    "quoteBar": "#5c7a64",
+    "statBg": "#f0f0f5",
+    "muted": "#666670"
+  },
+  "metadata": {
+    "title": "Document Title",
+    "author": "Author Name",
+    "subject": "Subject"
+  },
+  "watermark": {
+    "text": "DRAFT",
+    "color": "#cccccc",
+    "opacity": 0.15
+  },
+  "headerFooter": {
+    "logoSrc": "data:image/png;base64,...",
+    "headerLeft": "Company Name",
+    "headerRight": "Document Title",
+    "footerLeft": "Confidential",
+    "footerRightMode": "page-number"
+  },
+  "blocks": [
+    { "type": "heading", "text": "Title", "level": 1 },
+    { "type": "paragraph", "text": "Body text with **bold** and *italic*." },
+    { "type": "table", "headers": "A, B, C", "rows": "1, 2, 3\n4, 5, 6" }
+  ]
+}</code></pre>
+
+            <h2 id="pretext-api">Pretext API</h2>
+            <p>TangentFlow uses two core functions from <a href="https://github.com/chenglou/pretext">@chenglou/pretext</a>:</p>
+<pre><code>import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext'
+
+// Phase 1: Prepare (measure glyphs, segment text)
+const prepared = prepareWithSegments(text, '11px Helvetica')
+
+// Phase 2: Layout (calculate line breaks)
+const result = layoutWithLines(prepared, maxWidth, lineHeight)
+
+// Result:
+// {
+//   lineCount: 3,
+//   height: 49.5,
+//   lines: [
+//     { text: 'First line of text', width: 142.5, start: {...}, end: {...} },
+//     { text: 'second line wraps here', width: 168.3, start: {...}, end: {...} },
+//     { text: 'final line.', width: 72.1, start: {...}, end: {...} }
+//   ]
+// }</code></pre>
+            <p>The two-phase design means you can re-layout at different widths (e.g. when columns resize) without re-measuring the text. Measurement is the expensive operation (~19ms for 500 texts); layout is pure arithmetic (~0.09ms).</p>
+
+            <h2 id="pdf-lib-integration">pdf-lib Integration</h2>
+            <p>The flow engine produces an array of draw commands that map directly to pdf-lib operations:</p>
+<pre><code>// Draw commands produced by the flow engine:
+{ type: 'text', text: 'Hello', x: 60, y: 780, fontSize: 11,
+  fontKey: 'regular', color: [0.25, 0.25, 0.3] }
+
+{ type: 'rect', x: 60, y: 700, w: 475, h: 24,
+  color: [0.92, 0.92, 0.95] }
+
+{ type: 'line', x1: 60, y1: 700, x2: 535, y2: 700,
+  color: [0.85, 0.85, 0.88] }
+
+{ type: 'image', src: 'data:...', x: 60, y: 600,
+  w: 200, h: 150 }
+
+// These are rendered identically to:
+// 1. Canvas (preview) — using ctx.fillText, ctx.fillRect, etc.
+// 2. pdf-lib (export) — using page.drawText, page.drawRectangle, etc.</code></pre>
+            <p>This architecture ensures pixel-perfect consistency between the preview and the exported PDF.</p>
+
+            <!-- ── Templates ────────────────────────────────── -->
+            <h2 id="templates">Built-in Templates</h2>
+            <p>TangentFlow includes 9 pre-built templates that showcase different block combinations:</p>
+            <table>
+              <tr><th>Template</th><th>Blocks Used</th><th>Best For</th></tr>
+              <tr><td><strong>Report</strong></td><td>Headings, paragraphs, tables, bullet &amp; numbered lists, quotes, two-column, stat cards</td><td>Quarterly reports, performance reviews</td></tr>
+              <tr><td><strong>Invoice</strong></td><td>Stat row, key-value, tables, quotes</td><td>Billing, invoices, payment receipts</td></tr>
+              <tr><td><strong>Catalog</strong></td><td>Multiple tables with long descriptions</td><td>Product listings, inventory sheets</td></tr>
+              <tr><td><strong>Resume</strong></td><td>Key-value, bullet lists, two-column, dividers</td><td>CVs, professional profiles</td></tr>
+              <tr><td><strong>Proposal</strong></td><td>Numbered lists, tables, stat cards, quotes, two-column signatures</td><td>Project proposals, SOWs, bids</td></tr>
+              <tr><td><strong>Meeting Notes</strong></td><td>Two-column attendees, numbered agenda, action items table, quotes</td><td>Meeting minutes, standup notes</td></tr>
+              <tr><td><strong>Receipt</strong></td><td>Stat row, key-value, tables, two-column payment details</td><td>Transaction receipts, order confirmations</td></tr>
+              <tr><td><strong>NDA</strong></td><td>Paragraphs, bullet &amp; numbered lists, two-column signature blocks</td><td>Legal agreements, contracts</td></tr>
+              <tr><td><strong>Multilingual</strong></td><td>Paragraphs with mixed scripts</td><td>Testing Pretext's Unicode support</td></tr>
+            </table>
+
+            <div style="margin-top:var(--space-2xl);padding:var(--space-xl);background:var(--color-accent-bg);border-radius:var(--radius-md);text-align:center;">
+              <p style="margin-bottom:var(--space-md);color:var(--color-text);font-weight:500;">Ready to build your first document?</p>
+              <a href="app.html" class="btn btn-primary">Launch TangentFlow</a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<script defer src="js/nav.js"></script>
+<script>
+// Highlight active sidebar link on scroll
+document.addEventListener('DOMContentLoaded', () => {
+  const links = document.querySelectorAll('.docs-sidebar a[href^="#"]')
+  const sections = Array.from(links).map(a => {
+    const id = a.getAttribute('href').slice(1)
+    return { link: a, el: document.getElementById(id) }
+  }).filter(s => s.el)
+
+  function updateActive() {
+    let current = sections[0]
+    for (const s of sections) {
+      if (s.el.getBoundingClientRect().top <= 100) current = s
+    }
+    links.forEach(a => a.classList.remove('active'))
+    current.link.classList.add('active')
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true })
+  updateActive()
+})
+</script>
+</body>
+</html>

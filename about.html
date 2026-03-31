@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — TangentFlow</title>
+  <meta name="description" content="TangentFlow was built to solve the hardest problem in PDF generation: accurate text wrapping." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tangentflow.css" />
+</head>
+<body data-page="about">
+
+<div id="site-nav"></div>
+
+<main>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="heading-xl">We believe PDF generation should be simple, accurate, and open.</h1>
+    </div>
+  </section>
+
+  <!-- Story -->
+  <section class="section" style="padding-top:0;">
+    <div class="container-narrow">
+      <p class="body-lg" style="margin-bottom:var(--space-lg);">Every developer has the same experience with PDF generation. You pick a library, write the code, and everything looks great &mdash; until you add a table with long text, or switch to a different language, or test on mobile. Then the text overflows, the columns break, and you spend three days debugging something that should just work.</p>
+      <p class="body-lg" style="margin-bottom:var(--space-lg);">The root cause is fundamental: PDF is a fixed-layout format. Unlike HTML, there is no layout engine to reflow text. Every PDF library must implement its own text measurement and line-breaking algorithm. Most take shortcuts &mdash; approximate character widths, ASCII-only assumptions, or requiring a headless browser as a crutch.</p>
+      <p class="body-lg">TangentFlow was built on a different foundation. We use <a href="https://github.com/chenglou/pretext" target="_blank" rel="noopener" style="color:var(--color-accent);text-decoration:underline;">Pretext</a>, a JavaScript library that measures text with mathematical precision using the browser's actual font engine. No approximations, no heuristics, no headless Chrome. Just accurate layout, in pure arithmetic, for every language and every script.</p>
+    </div>
+  </section>
+
+  <!-- Technology -->
+  <section class="section section-border">
+    <div class="container">
+      <h2 class="heading-lg text-center" style="margin-bottom:var(--space-2xl);">Built on open source.</h2>
+      <div class="grid-2">
+        <div class="card">
+          <span class="badge" style="margin-bottom:var(--space-md);">Text Layout Engine</span>
+          <h3 class="heading-md" style="margin-bottom:var(--space-sm);">Pretext</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.7;margin-bottom:var(--space-md);">A JavaScript library for precise text measurement and paragraph layout. Created by Cheng Lou, Pretext solves the hardest problem in programmatic PDF generation &mdash; knowing exactly where each glyph should go. It handles Latin, CJK, Arabic, Hindi, emoji, and mixed-direction text with full Unicode support.</p>
+          <a href="https://github.com/chenglou/pretext" target="_blank" rel="noopener" class="btn btn-ghost" style="padding-left:0;">View on GitHub &rarr;</a>
+        </div>
+        <div class="card">
+          <span class="badge" style="margin-bottom:var(--space-md);">PDF Generation</span>
+          <h3 class="heading-md" style="margin-bottom:var(--space-sm);">pdf-lib</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.7;margin-bottom:var(--space-md);">A JavaScript library for creating and modifying PDF documents in any JavaScript environment. pdf-lib handles the PDF file format &mdash; pages, fonts, drawing commands, and binary encoding &mdash; so TangentFlow can focus entirely on layout and design.</p>
+          <a href="https://github.com/Hopding/pdf-lib" target="_blank" rel="noopener" class="btn btn-ghost" style="padding-left:0;">View on GitHub &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="section section-border">
+    <div class="container">
+      <h2 class="heading-lg text-center" style="margin-bottom:var(--space-2xl);">What we care about.</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3 class="heading-sm" style="margin-bottom:var(--space-sm);">Accuracy first</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.6;">Every pixel matters in document generation. A line break in the wrong place can change the meaning of a sentence, split a table awkwardly, or make a professional document look broken. We don't approximate &mdash; we measure.</p>
+        </div>
+        <div class="card">
+          <h3 class="heading-sm" style="margin-bottom:var(--space-sm);">No black boxes</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.6;">Open source, no hidden servers, no data collection. Your documents are generated in your browser and never leave your machine. The code is readable, the algorithms are documented, and the results are reproducible.</p>
+        </div>
+        <div class="card">
+          <h3 class="heading-sm" style="margin-bottom:var(--space-sm);">Developer-friendly</h3>
+          <p class="text-muted" style="font-size:0.9375rem;line-height:1.6;">Built by developers, for developers. Clean APIs, sensible defaults, and progressive complexity. Start with the visual builder, graduate to the JSON schema, scale to the batch API &mdash; at your own pace.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section section-border">
+    <div class="container">
+      <h2 class="heading-lg">See it in action.</h2>
+      <p class="body-lg">Open the builder and create a document with perfect text wrapping in 30 seconds.</p>
+      <a href="app.html" class="btn btn-primary btn-lg">Launch TangentFlow</a>
+    </div>
+  </section>
+
+</main>
+
+<div id="site-footer"></div>
+
+<script defer src="js/nav.js"></script>
+</body>
+</html>

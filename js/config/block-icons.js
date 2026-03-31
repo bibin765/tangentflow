@@ -1,0 +1,15 @@
+export const BLOCK_ICONS = {
+  image: '\u25A3',
+  heading: 'H',
+  paragraph: 'P',
+  'bullet-list': '\u2022',
+  'numbered-list': '1.',
+  quote: '\u201C',
+  table: 'T',
+  'key-value': 'K',
+  'two-column': '||',
+  'stat-row': '#',
+  divider: '\u2014',
+  spacer: '\u2195',
+  'page-break': '\u23CE',
+}
