@@ -218,27 +218,18 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       // Advance search position past this line + any whitespace
       searchFrom = charPos + lineText.length
 
-      // Position each run by measuring the prefix before it with Pretext
-      // This ensures positions match exactly what Pretext calculated
-      const baseX = margin + indent
-      let prefixLen = 0
+      // Position each run by accumulating actual styled widths
+      // This prevents overlap even though bold/italic are wider than regular
+      let x = margin + indent
 
       for (const run of runs) {
         if (!run.text) continue
         const fk = run.style === 'bold' ? 'bold' : run.style === 'italic' ? 'italic' : 'regular'
         const runColor = run.style === 'link' ? c.accent : color
 
-        // Measure the prefix text (everything before this run) to get exact x position
-        let x = baseX
-        if (prefixLen > 0) {
-          const prefix = lineText.slice(0, prefixLen)
-          const prefixPrep = prepareWithSegments(prefix, regularFont)
-          const prefixResult = layoutWithLines(prefixPrep, 99999, lineHeight)
-          x = baseX + (prefixResult.lines[0]?.width || 0)
-        }
-
-        // Measure this run with regular font for underline/link width
-        const runPrep = prepareWithSegments(run.text, regularFont)
+        // Measure with the ACTUAL styled font so runs don't overlap
+        const styledFont = `${fk === 'bold' ? 'bold ' : fk === 'italic' ? 'italic ' : ''}${fontSize}px Helvetica`
+        const runPrep = prepareWithSegments(run.text, styledFont)
         const runResult = layoutWithLines(runPrep, 99999, lineHeight)
         const runW = runResult.lines[0]?.width || 0
 
@@ -251,7 +242,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
           addDrawCmd({ type: 'link', x, y: absY - 2, w: runW, h: fontSize + 4, url: run.url })
         }
 
-        prefixLen += run.text.length
+        x += runW
       }
 
       curY += lineHeight
