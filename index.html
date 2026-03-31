@@ -26,6 +26,10 @@
         <a href="app.html" class="btn btn-primary btn-lg">Launch the Builder</a>
         <a href="#features" class="btn btn-secondary btn-lg">See How It Works</a>
       </div>
+      <div style="margin-top:var(--space-xl);">
+        <p class="caption" style="margin-bottom:var(--space-sm);">Or install the npm package:</p>
+        <code style="background:var(--color-bg-alt);padding:10px 20px;border-radius:var(--radius-pill);font-family:var(--font-mono);font-size:0.875rem;color:var(--color-text);border:1px solid var(--color-border-light);">npm install @upbrew/tangentflow</code>
+      </div>
     </div>
   </section>
 
@@ -236,6 +240,39 @@
           <blockquote>The Pretext engine handles our Japanese and Korean invoices perfectly. No other client-side PDF library comes close to this level of multilingual accuracy.</blockquote>
           <div class="testimonial-author">Yuki Tanaka</div>
           <div class="testimonial-role">CTO, ShipGlobal</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── npm Package ──────────────────────────────────────── -->
+  <section class="section section-border">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: var(--space-2xl);">
+        <h2 class="heading-lg">Use it in your code.</h2>
+        <p class="body-lg" style="max-width:520px;margin:var(--space-md) auto 0;">Install the npm package and generate PDFs programmatically. Fluent builder API or JSON schema &mdash; your choice.</p>
+      </div>
+      <div class="container-narrow">
+        <div style="background:#1a1815;border-radius:var(--radius-md);padding:var(--space-lg);overflow-x:auto;">
+<pre style="margin:0;color:#e8e4dc;font-size:0.875rem;line-height:1.7;"><code><span style="color:#9b9590;">// Install:</span>  npm install <span style="color:#7d9885;">@upbrew/tangentflow</span> <span style="color:#7d9885;">@chenglou/pretext</span>
+
+<span style="color:#d4a276;">import</span> { createDocument } <span style="color:#d4a276;">from</span> <span style="color:#a3be8c;">'@upbrew/tangentflow'</span>
+
+<span style="color:#d4a276;">const</span> doc = <span style="color:#88c0d0;">createDocument</span>({ page: { size: <span style="color:#a3be8c;">'a4'</span> } })
+
+doc.<span style="color:#88c0d0;">heading</span>(<span style="color:#a3be8c;">'Quarterly Report'</span>)
+doc.<span style="color:#88c0d0;">paragraph</span>(<span style="color:#a3be8c;">'Revenue grew **23%** year-over-year.'</span>)
+doc.<span style="color:#88c0d0;">table</span>({
+  headers: [<span style="color:#a3be8c;">'Region'</span>, <span style="color:#a3be8c;">'Revenue'</span>, <span style="color:#a3be8c;">'Growth'</span>],
+  rows: [[<span style="color:#a3be8c;">'North America'</span>, <span style="color:#a3be8c;">'$14.1M'</span>, <span style="color:#a3be8c;">'+13.7%'</span>]],
+})
+
+<span style="color:#d4a276;">const</span> { pages, pageSize } = doc.<span style="color:#88c0d0;">build</span>()
+<span style="color:#9b9590;">// → pages = draw commands, feed to pdf-lib or canvas</span></code></pre>
+        </div>
+        <div style="text-align:center;margin-top:var(--space-lg);">
+          <a href="https://www.npmjs.com/package/@upbrew/tangentflow" target="_blank" rel="noopener" class="btn btn-secondary">View on npm</a>
+          <a href="https://github.com/bibin765/tangentflow" target="_blank" rel="noopener" class="btn btn-ghost">GitHub &rarr;</a>
         </div>
       </div>
     </div>

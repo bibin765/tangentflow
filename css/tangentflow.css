@@ -329,6 +329,14 @@ a { color: inherit; text-decoration: none; }
   margin-left: var(--space-sm);
 }
 
+.site-nav .nav-links .nav-cta a {
+  color: #fff;
+}
+
+.site-nav .nav-links .nav-cta a:hover {
+  color: #fff;
+}
+
 .nav-hamburger {
   display: none;
   background: none;
