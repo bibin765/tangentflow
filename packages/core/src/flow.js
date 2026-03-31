@@ -181,17 +181,17 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     const prepared = prepareWithSegments(plainText, regularFont)
     const result = layoutWithLines(prepared, maxWidth, lineHeight)
 
-    // Walk through lines, matching each line's text back to the styled chars
-    let charPos = 0
+    // Walk through lines, finding each line's position in plain text
+    let searchFrom = 0
     for (const line of result.lines) {
       ensureSpace(lineHeight)
       const absY = contentTopY() - curY - fontSize
       const lineText = line.text
 
-      // Skip leading whitespace consumed by Pretext between lines
-      while (charPos < chars.length && chars[charPos].ch === ' ' && lineText.length > 0 && lineText[0] !== ' ') {
-        charPos++
-      }
+      // Find where this line's text starts in the plain text
+      // Pretext may trim trailing spaces, so search from current position
+      let charPos = plainText.indexOf(lineText, searchFrom)
+      if (charPos === -1) charPos = searchFrom // fallback
 
       // Build styled runs from the chars for this line
       const runs = []
@@ -214,6 +214,9 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
         }
       }
       if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl })
+
+      // Advance search position past this line + any whitespace
+      searchFrom = charPos + lineText.length
 
       // Position each run by measuring the prefix before it with Pretext
       // This ensures positions match exactly what Pretext calculated
@@ -251,7 +254,6 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
         prefixLen += run.text.length
       }
 
-      charPos += lineText.length
       curY += lineHeight
     }
   }
