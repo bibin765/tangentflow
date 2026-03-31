@@ -4,11 +4,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Why PDF Text Wrapping Is Still Broken in 2026 — TangentFlow</title>
-  <meta name="description" content="Most JavaScript PDF libraries still can't wrap text correctly. Here's why the problem is harder than it looks." />
+  <meta name="description" content="Why jsPDF, pdfmake, and other JavaScript PDF libraries still break text wrapping in 2026. A deep-dive into font metrics, Unicode, and how Pretext solves it." />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://tangentflow.com/blog/why-pdf-text-wrapping-is-broken/" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Why PDF Text Wrapping Is Still Broken in 2026" />
+  <meta property="og:description" content="Most JavaScript PDF libraries still can't wrap text correctly. A deep-dive into why PDF text wrapping is fundamentally hard and what it takes to fix it." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://tangentflow.com/blog/why-pdf-text-wrapping-is-broken/" />
+  <meta property="og:site_name" content="TangentFlow" />
+  <meta property="og:image" content="https://tangentflow.com/og-image.png" />
+  <meta property="article:published_time" content="2026-03-01T00:00:00Z" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Why PDF Text Wrapping Is Still Broken in 2026" />
+  <meta name="twitter:description" content="Most JavaScript PDF libraries still can't wrap text correctly. A deep-dive into why PDF text wrapping is fundamentally hard and what it takes to fix it." />
+  <meta name="twitter:image" content="https://tangentflow.com/og-image.png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;450;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../../css/tangentflow.css" />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Why PDF Text Wrapping Is Still Broken in 2026",
+    "url": "https://tangentflow.com/blog/why-pdf-text-wrapping-is-broken/",
+    "datePublished": "2026-03-01",
+    "dateModified": "2026-03-01",
+    "description": "Most JavaScript PDF libraries still can't wrap text correctly. Here's why the problem is fundamentally harder than it looks, and what it takes to solve it properly.",
+    "author": {
+      "@type": "Organization",
+      "name": "TangentFlow",
+      "url": "https://tangentflow.com/"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "TangentFlow",
+      "url": "https://tangentflow.com/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://tangentflow.com/og-image.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://tangentflow.com/blog/why-pdf-text-wrapping-is-broken/"
+    },
+    "keywords": ["pdf text wrapping", "javascript pdf library", "pdf generator javascript", "jsPDF text wrapping", "pdfmake wrapping", "pretext text layout"]
+  }
+  </script>
 </head>
 <body data-page="blog" data-depth="2">
 <div id="site-nav"></div>
