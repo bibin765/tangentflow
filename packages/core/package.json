@@ -1,6 +1,6 @@
 {
   "name": "@upbrew/tangentflow",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "PDF document generation with pixel-perfect text wrapping. Powered by Pretext.",
   "type": "module",
   "main": "./src/index.js",
@@ -27,9 +27,11 @@
     "report"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/bibin765/tangentflow/tree/main/packages/core#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tangentflow/core"
+    "url": "https://github.com/bibin765/tangentflow",
+    "directory": "packages/core"
   },
   "peerDependencies": {
     "@chenglou/pretext": ">=0.0.3"
