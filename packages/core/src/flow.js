@@ -166,9 +166,8 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     const lineHeight = fontSize * lineHeightMult
     const maxWidth = contentW - indent
     const segments = parseInline(text)
-    const regularFont = `${fontSize}px Helvetica`
 
-    // Build styled character array
+    // Build styled character array: each char knows its style
     const chars = []
     for (const seg of segments) {
       for (const ch of seg.text) {
@@ -178,74 +177,66 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
     // Get plain text and use Pretext for line-breaking
     const plainText = chars.map(c => c.ch).join('')
-    const prepared = prepareWithSegments(plainText, regularFont)
+    const fontStr = `${fontSize}px Helvetica`
+    const prepared = prepareWithSegments(plainText, fontStr)
     const result = layoutWithLines(prepared, maxWidth, lineHeight)
 
-    // Overlay approach:
-    // 1. Render each line as regular text (perfect positioning from Pretext)
-    // 2. Find styled segments within each line
-    // 3. Measure prefix with regular font to get x offset
-    // 4. Re-render styled segments on top (overwrites regular text visually)
-    let searchFrom = 0
+    // Walk through lines, matching each line's text back to the styled chars
+    let charPos = 0
     for (const line of result.lines) {
       ensureSpace(lineHeight)
       const absY = contentTopY() - curY - fontSize
-      const baseX = margin + indent
+
+      // Find which chars belong to this line by matching the line text
       const lineText = line.text
-
-      // Find where this line sits in the plain text
-      let charPos = plainText.indexOf(lineText, searchFrom)
-      if (charPos === -1) charPos = searchFrom
-      searchFrom = charPos + lineText.length
-
-      // First: render the entire line as regular text
-      addDrawCmd({ type: 'text', text: lineText, x: baseX, y: absY, fontSize, fontKey: 'regular', color })
-
-      // Then: find styled ranges and overlay them
-      for (let i = 0; i < lineText.length; i++) {
-        const ci = charPos + i
-        if (ci >= chars.length) break
-        const ch = chars[ci]
-
-        // Skip regular text (already rendered)
-        if (ch.style === 'regular') continue
-
-        // Find the extent of this styled run
-        let runEnd = i + 1
-        while (runEnd < lineText.length && charPos + runEnd < chars.length && chars[charPos + runEnd].style === ch.style) {
-          runEnd++
-        }
-
-        const runText = lineText.slice(i, runEnd)
-        const prefix = lineText.slice(0, i)
-        const fk = ch.style === 'bold' ? 'bold' : ch.style === 'italic' ? 'italic' : 'regular'
-        const runColor = ch.style === 'link' ? c.accent : color
-
-        // Measure prefix width with regular font to get exact x position
-        let x = baseX
-        if (prefix.length > 0) {
-          const prefixW = measureRunWidth(prefix, fontSize, 'regular')
-          x = baseX + prefixW
-        }
-
-        // Measure this run width with regular font (for underline/link bounds)
-        const runW = measureRunWidth(runText, fontSize, 'regular')
-
-        // Overlay styled text on top of regular text
-        addDrawCmd({ type: 'text', text: runText, x, y: absY, fontSize, fontKey: fk, color: runColor })
-
-        // Underline
-        if (ch.style === 'underline' || ch.style === 'link') {
-          addDrawCmd({ type: 'line', x1: x, y1: absY - 1, x2: x + runW, y2: absY - 1, color: runColor, lineWidth: 0.5 })
-        }
-        // Link annotation
-        if (ch.style === 'link' && ch.url) {
-          addDrawCmd({ type: 'link', x, y: absY - 2, w: runW, h: fontSize + 4, url: ch.url })
-        }
-
-        i = runEnd - 1 // skip to end of this run
+      // Skip any leading whitespace that Pretext consumed between lines
+      while (charPos < chars.length && chars[charPos].ch === ' ' && lineText.length > 0 && lineText[0] !== ' ') {
+        charPos++
       }
 
+      // Build styled runs from the chars for this line length
+      const runs = []
+      let currentStyle = null
+      let currentUrl = null
+      let runText = ''
+
+      for (let i = 0; i < lineText.length; i++) {
+        const ci = charPos + i
+        const style = ci < chars.length ? chars[ci].style : 'regular'
+        const url = ci < chars.length ? chars[ci].url : null
+
+        if (style !== currentStyle || url !== currentUrl) {
+          if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl })
+          currentStyle = style
+          currentUrl = url
+          runText = lineText[i]
+        } else {
+          runText += lineText[i]
+        }
+      }
+      if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl })
+
+      // Render each run at the correct x position
+      let x = margin + indent
+      for (const run of runs) {
+        if (!run.text) continue
+        const fk = run.style === 'bold' ? 'bold' : run.style === 'italic' ? 'italic' : 'regular'
+        const runColor = run.style === 'link' ? c.accent : color
+
+        addDrawCmd({ type: 'text', text: run.text, x, y: absY, fontSize, fontKey: fk, color: runColor })
+
+        const runW = measureRunWidth(run.text, fontSize, fk)
+        x += runW
+
+        if (run.style === 'underline' || run.style === 'link') {
+          addDrawCmd({ type: 'line', x1: x - runW, y1: absY - 1, x2: x, y2: absY - 1, color: runColor, lineWidth: 0.5 })
+        }
+        if (run.style === 'link' && run.url) {
+          addDrawCmd({ type: 'link', x: x - runW, y: absY - 2, w: runW, h: fontSize + 4, url: run.url })
+        }
+      }
+
+      charPos += lineText.length
       curY += lineHeight
     }
   }
