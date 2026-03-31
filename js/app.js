@@ -1,8 +1,7 @@
 // TangentFlow — App Entry Point
-import { PAGE_SIZES } from './config/page-sizes.js'
+// Core engine imported from @upbrew/tangentflow (single source of truth)
+import { PAGE_SIZES, hexToRgbArr, processBlocks } from '@upbrew/tangentflow'
 import { TEMPLATES } from './config/templates.js'
-import { hexToRgbArr } from './engine/colors.js'
-import { processBlocks } from './engine/blocks.js'
 import { renderPreview } from './renderers/canvas.js'
 import { generatePDF as renderPDF } from './renderers/pdf.js'
 import { buildBlockList } from './ui/block-list.js'

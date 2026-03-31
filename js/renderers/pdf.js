@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from '../../node_modules/pdf-lib/dist/pdf-lib.esm.min.js'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 /**
  * Generate a PDF from pre-computed draw commands and trigger a download.
