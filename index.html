@@ -218,15 +218,51 @@
 
     for (const block of prepared) {
       if (block.type === 'table') {
-        // ── Table rendering with per-cell Pretext wrapping ──
+        // ── Table rendering — cells re-wrap around cursor ──
         const cols = block.headers.length
         const cellPad = 5
         const colW = contentW / cols
 
-        // Measure all cell heights to find row heights
-        function measureCell(prep, width) {
-          const result = layoutWithLines(prep, Math.max(width - cellPad * 2, 20), TABLE_LH)
-          return result.lines
+        // Lay out cell text using layoutNextLine, accounting for cursor within cell bounds
+        function layCellLines(prep, cellLeft, cellRight, cellTopY) {
+          const lines = []
+          let cur = { segmentIndex: 0, graphemeIndex: 0 }
+          let ly = cellTopY + cellPad
+          let maxIter = 20
+          while (maxIter-- > 0) {
+            if (cur.segmentIndex >= prep.segments.length) break
+            // Check cursor intersection within this cell's horizontal bounds
+            let availW = cellRight - cellLeft - cellPad * 2
+            let textX = cellLeft + cellPad
+            const lineMidY = ly + TABLE_LH / 2
+            const dy = lineMidY - mouseY
+            if (Math.abs(dy) < CURSOR_R) {
+              const halfChord = Math.sqrt(CURSOR_R * CURSOR_R - dy * dy)
+              const obsL = mouseX - halfChord
+              const obsR = mouseX + halfChord
+              // Only affect if cursor overlaps this cell
+              if (obsR > cellLeft && obsL < cellRight) {
+                const clampL = Math.max(obsL, cellLeft + cellPad) - cellLeft - cellPad
+                const clampR = Math.min(obsR, cellRight - cellPad) - cellLeft - cellPad
+                const leftSpace = clampL
+                const rightSpace = availW - clampR
+                if (leftSpace >= rightSpace && leftSpace > 10) {
+                  availW = leftSpace - 2
+                } else if (rightSpace > 10) {
+                  textX = cellLeft + cellPad + clampR + 2
+                  availW = rightSpace - 2
+                }
+              }
+            }
+            if (availW < 10) { ly += TABLE_LH; continue }
+            const line = layoutNextLine(prep, cur, Math.max(availW, 10))
+            if (!line) break
+            if (line.end.segmentIndex === cur.segmentIndex && line.end.graphemeIndex === cur.graphemeIndex) break
+            lines.push({ text: line.text, x: textX, y: ly })
+            cur = line.end
+            ly += TABLE_LH
+          }
+          return { lines, height: ly - cellTopY + cellPad }
         }
 
         // Header row
@@ -238,10 +274,8 @@
         block.headers.forEach((h, ci) => {
           ctx.fillText(h, PAD + ci * colW + cellPad, y + 12)
         })
-        // Header border
         ctx.strokeStyle = '#d8d8dc'; ctx.lineWidth = 0.5
         ctx.beginPath(); ctx.moveTo(PAD, y + headerH); ctx.lineTo(PAD + contentW, y + headerH); ctx.stroke()
-        // Column lines
         for (let ci = 1; ci < cols; ci++) {
           ctx.beginPath(); ctx.moveTo(PAD + ci * colW, y); ctx.lineTo(PAD + ci * colW, y + headerH); ctx.stroke()
         }
@@ -249,10 +283,13 @@
 
         // Data rows
         block.rows.forEach((row, ri) => {
-          // Measure each cell to find row height
-          const cellLines = row.map((cell, ci) => measureCell(block._cellPreps[ri][ci], colW))
-          const maxLines = Math.max(...cellLines.map(l => l.length))
-          const rowH = Math.max(18, maxLines * TABLE_LH + cellPad * 2)
+          // Lay out every cell with cursor awareness
+          const cellResults = row.map((cell, ci) => {
+            const cellLeft = PAD + ci * colW
+            const cellRight = cellLeft + colW
+            return layCellLines(block._cellPreps[ri][ci], cellLeft, cellRight, y)
+          })
+          const rowH = Math.max(18, ...cellResults.map(r => r.height))
 
           // Zebra stripe
           if (ri % 2 === 0) {
@@ -260,24 +297,19 @@
             ctx.fillRect(PAD, y, contentW, rowH)
           }
 
-          // Cell text (wrapped by Pretext)
+          // Render cell text
           ctx.font = TABLE_FONT
           ctx.fillStyle = '#3a3a44'
-          row.forEach((cell, ci) => {
-            const lines = cellLines[ci]
-            lines.forEach((line, li) => {
-              ctx.fillText(line.text, PAD + ci * colW + cellPad, y + cellPad + (li + 1) * TABLE_LH - 3)
-            })
+          cellResults.forEach(r => {
+            r.lines.forEach(l => { ctx.fillText(l.text, l.x, l.y + TABLE_LH - 3) })
           })
 
-          // Row border
+          // Borders
           ctx.strokeStyle = '#e4e4e8'; ctx.lineWidth = 0.5
           ctx.beginPath(); ctx.moveTo(PAD, y + rowH); ctx.lineTo(PAD + contentW, y + rowH); ctx.stroke()
-          // Column lines
           for (let ci = 1; ci < cols; ci++) {
             ctx.beginPath(); ctx.moveTo(PAD + ci * colW, y); ctx.lineTo(PAD + ci * colW, y + rowH); ctx.stroke()
           }
-
           y += rowH
         })
 
