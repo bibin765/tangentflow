@@ -94,6 +94,202 @@
     </div>
   </section>
 
+  <!-- ── Live Reflow Demo ─────────────────────────────────── -->
+  <section class="section" id="live-demo">
+    <div class="container">
+      <div style="background:var(--color-surface);border:1px solid var(--color-border-light);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.04);">
+        <!-- Top bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--color-border-light);background:var(--color-bg);">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="display:flex;gap:5px;">
+              <span style="width:10px;height:10px;border-radius:50%;background:#f85149;display:inline-block;"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#f0883e;display:inline-block;"></span>
+              <span style="width:10px;height:10px;border-radius:50%;background:#3fb950;display:inline-block;"></span>
+            </div>
+            <span style="font-size:12px;color:var(--color-text-muted);font-family:var(--font-mono);">document.pdf</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-size:11px;color:var(--color-text-muted);margin:0;">Width</label>
+            <input type="range" id="demo-width" min="240" max="560" value="480" style="width:120px;accent-color:var(--color-accent);" />
+            <span id="demo-width-val" style="font-size:11px;color:var(--color-text-muted);min-width:35px;font-family:var(--font-mono);">480px</span>
+          </div>
+        </div>
+        <!-- Canvas area -->
+        <div style="display:flex;justify-content:center;padding:24px;background:var(--color-bg-alt);min-height:360px;" id="demo-canvas-wrap">
+          <canvas id="demo-canvas" style="box-shadow:0 2px 12px rgba(0,0,0,0.06);border-radius:2px;"></canvas>
+        </div>
+        <!-- Bottom caption -->
+        <div style="padding:10px 20px;font-size:12px;color:var(--color-text-muted);text-align:center;border-top:1px solid var(--color-border-light);">
+          Drag the slider &mdash; text reflows in real-time using Pretext's <code style="background:var(--color-bg-alt);padding:1px 5px;border-radius:3px;font-size:11px;">layoutWithLines()</code> &bull; Every language, every script, pixel-perfect
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@chenglou/pretext": "./vendor/pretext/layout.js"
+    }
+  }
+  </script>
+  <script type="module">
+  import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext'
+
+  const canvas = document.getElementById('demo-canvas')
+  const ctx = canvas.getContext('2d')
+  const slider = document.getElementById('demo-width')
+  const valLabel = document.getElementById('demo-width-val')
+
+  const CONTENT = [
+    { type: 'heading', text: 'Quarterly Revenue Report', font: 'bold 18px Helvetica, sans-serif', size: 18, lh: 22, color: '#1a1815', gap: 6 },
+    { type: 'text', text: 'Overall revenue grew 23% year-over-year, driven by expansion in Asia Pacific and strong adoption of the enterprise product tier across all segments.', font: '11px Helvetica, sans-serif', size: 11, lh: 17, color: '#4a4a50', gap: 12 },
+    { type: 'table', headers: ['Region', 'Revenue', 'Growth'], rows: [['North America', '$14.1M', '+13.7%'], ['Asia Pacific', '$7.8M', '+52.9%'], ['Europe & UK', '$10.2M', '+17.2%']], gap: 12 },
+    { type: 'heading', text: 'Key Initiatives', font: 'bold 13px Helvetica, sans-serif', size: 13, lh: 17, color: '#1a1815', gap: 4 },
+    { type: 'list', items: ['Launch AI analytics module with predictive insights', 'Expand into Southeast Asian market', 'Rollout partner certification program'], font: '11px Helvetica, sans-serif', size: 11, lh: 16, color: '#4a4a50', gap: 10 },
+    { type: 'text', text: '\u201CThis quarter represents a turning point for global expansion.\u201D \u2014 CEO', font: 'italic 11px Georgia, serif', size: 11, lh: 17, color: '#6b6560', gap: 8 },
+    { type: 'multilang', texts: [
+      { label: 'Japanese', text: '\u56DB\u534A\u671F\u306E\u53CE\u76CA\u306F\u524D\u5E74\u540C\u671F\u6BD4\u3067\u5927\u5E45\u306B\u589E\u52A0\u3057\u307E\u3057\u305F', font: '11px sans-serif' },
+      { label: 'Arabic', text: '\u0646\u0645\u0648 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A \u0628\u0646\u0633\u0628\u0629 \u0643\u0628\u064A\u0631\u0629 \u0647\u0630\u0627 \u0627\u0644\u0631\u0628\u0639', font: '11px sans-serif' },
+      { label: 'Hindi', text: '\u0924\u093F\u092E\u093E\u0939\u0940 \u0930\u093E\u091C\u0938\u094D\u0935 \u092E\u0947\u0902 \u0909\u0932\u094D\u0932\u0947\u0916\u0928\u0940\u092F \u0935\u0943\u0926\u094D\u0927\u093F \u0939\u0941\u0908', font: '11px sans-serif' },
+    ], size: 11, lh: 16, gap: 0 },
+  ]
+
+  function render() {
+    const maxW = parseInt(slider.value)
+    valLabel.textContent = maxW + 'px'
+    const pad = 24
+    const contentW = maxW - pad * 2
+    const scale = 2
+
+    // First pass: measure height
+    let totalH = pad
+    const laid = []
+    for (const block of CONTENT) {
+      if (block.type === 'heading' || block.type === 'text') {
+        const prep = prepareWithSegments(block.text, block.font)
+        const result = layoutWithLines(prep, contentW, block.lh)
+        laid.push({ ...block, lines: result.lines })
+        totalH += result.lines.length * block.lh + block.gap
+      } else if (block.type === 'table') {
+        const rowH = 20, headerH = 22
+        laid.push(block)
+        totalH += headerH + block.rows.length * rowH + block.gap
+      } else if (block.type === 'list') {
+        const items = []
+        for (const item of block.items) {
+          const prep = prepareWithSegments(item, block.font)
+          const result = layoutWithLines(prep, contentW - 14, block.lh)
+          items.push(result.lines)
+          totalH += result.lines.length * block.lh + 2
+        }
+        laid.push({ ...block, laidItems: items })
+        totalH += block.gap
+      } else if (block.type === 'multilang') {
+        laid.push(block)
+        for (const t of block.texts) {
+          const prep = prepareWithSegments(t.text, t.font)
+          const result = layoutWithLines(prep, contentW - 50, block.lh)
+          t._lines = result.lines
+          totalH += result.lines.length * block.lh + 3
+        }
+        totalH += block.gap + 6
+      }
+    }
+    totalH += pad
+
+    canvas.width = maxW * scale
+    canvas.height = totalH * scale
+    canvas.style.width = maxW + 'px'
+    canvas.style.height = totalH + 'px'
+    ctx.scale(scale, scale)
+
+    // White bg
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, maxW, totalH)
+
+    let y = pad
+    for (const block of laid) {
+      if (block.type === 'heading' || block.type === 'text') {
+        ctx.font = block.font
+        ctx.fillStyle = block.color
+        for (const line of block.lines) {
+          ctx.fillText(line.text, pad, y + block.size * 0.85)
+          y += block.lh
+        }
+        y += block.gap
+      } else if (block.type === 'table') {
+        const cols = block.headers.length
+        const colW = contentW / cols
+        const headerH = 22, rowH = 20
+        // Header bg
+        ctx.fillStyle = '#f0f0f4'
+        ctx.fillRect(pad, y, contentW, headerH)
+        ctx.font = 'bold 10px Helvetica, sans-serif'
+        ctx.fillStyle = '#1a1815'
+        block.headers.forEach((h, ci) => {
+          ctx.fillText(h, pad + ci * colW + 6, y + 14)
+        })
+        y += headerH
+        // Rows
+        block.rows.forEach((row, ri) => {
+          if (ri % 2 === 0) { ctx.fillStyle = '#f8f8fb'; ctx.fillRect(pad, y, contentW, rowH) }
+          ctx.font = '10px Helvetica, sans-serif'
+          ctx.fillStyle = '#3a3a44'
+          row.forEach((cell, ci) => { ctx.fillText(cell, pad + ci * colW + 6, y + 14) })
+          // Row border
+          ctx.strokeStyle = '#e8e8ec'; ctx.lineWidth = 0.5
+          ctx.beginPath(); ctx.moveTo(pad, y + rowH); ctx.lineTo(pad + contentW, y + rowH); ctx.stroke()
+          y += rowH
+        })
+        y += block.gap
+      } else if (block.type === 'list') {
+        ctx.font = block.font
+        ctx.fillStyle = block.color
+        block.laidItems.forEach(lines => {
+          lines.forEach((line, li) => {
+            if (li === 0) { ctx.fillStyle = '#9b9590'; ctx.fillText('\u2022', pad + 2, y + block.size * 0.85); ctx.fillStyle = block.color }
+            ctx.fillText(line.text, pad + 14, y + block.size * 0.85)
+            y += block.lh
+          })
+          y += 2
+        })
+        y += block.gap
+      } else if (block.type === 'multilang') {
+        // Accent bar
+        ctx.fillStyle = '#5c7a64'
+        ctx.fillRect(pad, y, 3, 0)
+        const startY = y
+        y += 3
+        block.texts.forEach(t => {
+          // Label
+          ctx.font = 'bold 9px Helvetica, sans-serif'
+          ctx.fillStyle = '#9b9590'
+          ctx.fillText(t.label, pad + 8, y + 9)
+          // Text
+          ctx.font = t.font
+          ctx.fillStyle = '#4a4a50'
+          t._lines.forEach(line => {
+            ctx.fillText(line.text, pad + 50, y + block.size * 0.85)
+            y += block.lh
+          })
+          y += 3
+        })
+        // Draw bar
+        ctx.fillStyle = '#5c7a6430'
+        ctx.fillRect(pad, startY, contentW, y - startY)
+        ctx.fillStyle = '#5c7a64'
+        ctx.fillRect(pad, startY, 3, y - startY)
+        y += block.gap
+      }
+    }
+  }
+
+  slider.addEventListener('input', render)
+  document.fonts.ready.then(render)
+  render()
+  </script>
+
   <!-- ── Problem ─────────────────────────────────────────── -->
   <section class="section">
     <div class="container">
