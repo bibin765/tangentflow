@@ -15,7 +15,7 @@ export async function generatePDF(pages, pageSize, watermark, metadata) {
   if (metadata.title) pdfDoc.setTitle(metadata.title)
   if (metadata.author) pdfDoc.setAuthor(metadata.author)
   if (metadata.subject) pdfDoc.setSubject(metadata.subject)
-  pdfDoc.setCreator('TangentFlow \u2014 tangentflow.dev')
+  pdfDoc.setCreator('TangentFlow \u2014 tangentflow.com')
   pdfDoc.setProducer('TangentFlow (Pretext + pdf-lib)')
 
   // ── Unicode text support ─────────────────────────────

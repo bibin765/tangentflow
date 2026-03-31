@@ -2,7 +2,7 @@
 
 PDF document generation with pixel-perfect text wrapping. Powered by [Pretext](https://github.com/chenglou/pretext).
 
-**[Live Demo](https://tangentflow.dev)** | **[npm Package](https://www.npmjs.com/package/@upbrew/tangentflow)** | **[Documentation](https://tangentflow.dev/docs.html)**
+**[Live Demo](https://tangentflow.com)** | **[npm Package](https://www.npmjs.com/package/@upbrew/tangentflow)** | **[Documentation](https://tangentflow.com/docs.html)**
 
 ---
 

@@ -37,7 +37,7 @@ export const TEMPLATES = {
     { type: 'divider' },
     { type: 'spacer', height: 6 },
     { type: 'quote', text: 'Payment terms: Net 30. Please remit payment via wire transfer to the account details provided separately. A 1.5% monthly late fee applies to overdue balances.', attribution: '' },
-    { type: 'paragraph', text: 'For questions regarding this invoice, contact [billing@tangentflow.dev](mailto:billing@tangentflow.dev) or visit [tangentflow.dev](https://tangentflow.dev).' },
+    { type: 'paragraph', text: 'For questions regarding this invoice, contact [billing@tangentflow.com](mailto:billing@tangentflow.com) or visit [tangentflow.com](https://tangentflow.com).' },
   ],
   catalog: [
     { type: 'heading', text: 'Product Catalog — Spring 2026', level: 1 },
@@ -120,7 +120,7 @@ export const TEMPLATES = {
     { type: 'stat-row', items: 'Receipt #: RCP-8294, Date: March 31 2026, Payment: Credit Card, Status: Paid' },
     { type: 'divider' },
     { type: 'heading', text: 'From', level: 2 },
-    { type: 'key-value', items: 'Business: TangentFlow Inc.\nAddress: 548 Market St, Suite 300, San Francisco, CA 94104\nEmail: billing@tangentflow.dev\nTax ID: US-82-1938475' },
+    { type: 'key-value', items: 'Business: TangentFlow Inc.\nAddress: 548 Market St, Suite 300, San Francisco, CA 94104\nEmail: billing@tangentflow.com\nTax ID: US-82-1938475' },
     { type: 'spacer', height: 6 },
     { type: 'heading', text: 'To', level: 2 },
     { type: 'key-value', items: 'Customer: Sarah Johnson\nEmail: sarah.johnson@company.com\nAccount: ACC-29481' },
