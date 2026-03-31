@@ -2,6 +2,8 @@
 
 PDF document generation with pixel-perfect text wrapping. Powered by [Pretext](https://github.com/chenglou/pretext).
 
+**[Live Demo](https://tangentflow.com/app)** | **[Documentation](https://tangentflow.com/docs)** | **[GitHub](https://github.com/bibin765/tangentflow)**
+
 TangentFlow is the missing layout layer for PDF generation in JavaScript. It solves the hardest problem — **accurate text measurement and line-breaking** — so your documents look exactly right, in every language, without a headless browser.
 
 ## Why TangentFlow?
