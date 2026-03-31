@@ -217,6 +217,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl })
 
       // Render each run at the correct x position
+      // Use regular font for width measurement to match Pretext's line-breaking
       let x = margin + indent
       for (const run of runs) {
         if (!run.text) continue
@@ -225,7 +226,8 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
         addDrawCmd({ type: 'text', text: run.text, x, y: absY, fontSize, fontKey: fk, color: runColor })
 
-        const runW = measureRunWidth(run.text, fontSize, fk)
+        // Measure with regular font to match Pretext's layout
+        const runW = measureRunWidth(run.text, fontSize, 'regular')
         x += runW
 
         if (run.style === 'underline' || run.style === 'link') {
