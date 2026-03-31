@@ -135,7 +135,7 @@
   const ctx = canvas.getContext('2d')
   const wrap = document.getElementById('demo-canvas-wrap')
 
-  const W = 540, H = 420, PAD = 28, SCALE = 2
+  const W = 540, H = 560, PAD = 28, SCALE = 2
   const CURSOR_R = 50 // cursor obstacle radius
 
   let mouseX = -200, mouseY = -200 // off-screen initially
@@ -147,24 +147,64 @@
   canvas.style.width = W + 'px'
   canvas.style.height = H + 'px'
 
-  // Text blocks to render
+  // Content blocks — text and table
   const BLOCKS = [
-    { text: 'Quarterly Revenue Report', font: 'bold 19px Helvetica, sans-serif', size: 19, lh: 24, color: '#1a1815' },
-    { text: 'Overall revenue grew 23% year-over-year, driven primarily by expansion in the Asia Pacific region and strong enterprise adoption. Customer retention remained at 94.2% while average deal size increased from $48K to $62K, reflecting successful upsell initiatives across all product tiers.', font: '11.5px Helvetica, sans-serif', size: 11.5, lh: 18, color: '#4a4a50' },
-    { text: 'Key Initiatives for Next Quarter', font: 'bold 14px Helvetica, sans-serif', size: 14, lh: 19, color: '#1a1815' },
-    { text: 'Launch of AI-powered predictive analytics module targeting enterprise customers in financial services. Expansion into Southeast Asian markets starting with Singapore and Indonesia. Migration of 200+ legacy accounts to the new unified platform with zero-downtime deployment strategy.', font: '11.5px Helvetica, sans-serif', size: 11.5, lh: 18, color: '#4a4a50' },
-    { text: '\u56DB\u534A\u671F\u306E\u53CE\u76CA\u306F\u524D\u5E74\u540C\u671F\u6BD4\u3067\u5927\u5E45\u306B\u589E\u52A0\u3057\u307E\u3057\u305F\u3002\u30A2\u30B8\u30A2\u592A\u5E73\u6D0B\u5730\u57DF\u3067\u306E\u62E1\u5927\u304C\u7279\u306B\u9855\u8457\u3067\u3059\u3002', font: '11.5px sans-serif', size: 11.5, lh: 18, color: '#5a5a60' },
-    { text: '\u0924\u093F\u092E\u093E\u0939\u0940 \u0930\u093E\u091C\u0938\u094D\u0935 \u092E\u0947\u0902 \u0909\u0932\u094D\u0932\u0947\u0916\u0928\u0940\u092F \u0935\u0943\u0926\u094D\u0927\u093F \u0939\u0941\u0908 \u0939\u0948\u0964 \u090F\u0936\u093F\u092F\u093E \u092A\u094D\u0930\u0936\u093E\u0902\u0924 \u0915\u094D\u0937\u0947\u0924\u094D\u0930 \u092E\u0947\u0902 \u0935\u093F\u0938\u094D\u0924\u093E\u0930 \u0914\u0930 \u0909\u0926\u094D\u092F\u092E \u0909\u0924\u094D\u092A\u093E\u0926 \u0938\u094D\u0924\u0930 \u0915\u0947 \u092E\u091C\u092C\u0942\u0924 \u0905\u092A\u0928\u093E\u0928\u0947 \u0938\u0947 \u092F\u0939 \u0938\u0902\u092D\u0935 \u0939\u0941\u0906\u0964', font: '11.5px sans-serif', size: 11.5, lh: 18, color: '#5a5a60' },
+    { type: 'text', text: 'Quarterly Revenue Report', font: 'bold 19px Helvetica, sans-serif', size: 19, lh: 24, color: '#1a1815' },
+    { type: 'text', text: 'Overall revenue grew 23% year-over-year, driven primarily by expansion in the Asia Pacific region and strong enterprise adoption across all segments.', font: '11.5px Helvetica, sans-serif', size: 11.5, lh: 18, color: '#4a4a50' },
+    { type: 'table',
+      headers: ['Region', 'Q3 Revenue', 'Q4 Revenue', 'Growth', 'Notes'],
+      rows: [
+        ['North America', '$12.4M', '$14.1M', '+13.7%', 'Strong enterprise adoption driven by product launches'],
+        ['Asia Pacific', '$5.1M', '$7.8M', '+52.9%', 'Fastest growing region with major fintech wins'],
+        ['Europe & UK', '$8.7M', '$10.2M', '+17.2%', 'GDPR improvements boosted customer confidence'],
+        ['Latin America', '$2.3M', '$2.9M', '+26.1%', 'New distributor partnerships in Brazil'],
+        ['Middle East', '$1.1M', '$1.5M', '+36.4%', 'Early stage but promising UAE pipeline'],
+      ]
+    },
+    { type: 'text', text: 'Key Initiatives for Next Quarter', font: 'bold 14px Helvetica, sans-serif', size: 14, lh: 19, color: '#1a1815' },
+    { type: 'text', text: 'Launch of AI-powered predictive analytics module targeting enterprise customers. Expansion into Southeast Asian markets starting with Singapore. Migration of 200+ legacy accounts to the new unified platform.', font: '11.5px Helvetica, sans-serif', size: 11.5, lh: 18, color: '#4a4a50' },
+    { type: 'text', text: '\u56DB\u534A\u671F\u306E\u53CE\u76CA\u306F\u524D\u5E74\u540C\u671F\u6BD4\u3067\u5927\u5E45\u306B\u589E\u52A0\u3057\u307E\u3057\u305F\u3002\u30A2\u30B8\u30A2\u592A\u5E73\u6D0B\u5730\u57DF\u3067\u306E\u62E1\u5927\u304C\u7279\u306B\u9855\u8457\u3067\u3059\u3002', font: '11.5px sans-serif', size: 11.5, lh: 18, color: '#5a5a60' },
+    { type: 'text', text: '\u0924\u093F\u092E\u093E\u0939\u0940 \u0930\u093E\u091C\u0938\u094D\u0935 \u092E\u0947\u0902 \u0909\u0932\u094D\u0932\u0947\u0916\u0928\u0940\u092F \u0935\u0943\u0926\u094D\u0927\u093F \u0939\u0941\u0908\u0964 \u090F\u0936\u093F\u092F\u093E \u092A\u094D\u0930\u0936\u093E\u0902\u0924 \u0915\u094D\u0937\u0947\u0924\u094D\u0930 \u092E\u0947\u0902 \u0935\u093F\u0938\u094D\u0924\u093E\u0930 \u0914\u0930 \u0905\u092A\u0928\u093E\u0928\u0947 \u0938\u0947 \u092F\u0939 \u0938\u0902\u092D\u0935 \u0939\u0941\u0906\u0964', font: '11.5px sans-serif', size: 11.5, lh: 18, color: '#5a5a60' },
   ]
 
-  // Pre-prepare all text segments (one-time cost)
-  const prepared = BLOCKS.map(b => ({
-    ...b,
-    prep: prepareWithSegments(b.text, b.font),
-  }))
+  // Pre-prepare text segments (one-time cost)
+  const prepared = BLOCKS.map(b => {
+    if (b.type === 'table') return b
+    return { ...b, prep: prepareWithSegments(b.text, b.font) }
+  })
+
+  // Prepare table cell text
+  const TABLE_FONT = '9.5px Helvetica, sans-serif'
+  const TABLE_BOLD = 'bold 9.5px Helvetica, sans-serif'
+  const TABLE_SIZE = 9.5, TABLE_LH = 14
+
+  for (const block of prepared) {
+    if (block.type !== 'table') continue
+    block._headerPreps = block.headers.map(h => prepareWithSegments(h, TABLE_BOLD))
+    block._cellPreps = block.rows.map(row => row.map(cell => prepareWithSegments(cell, TABLE_FONT)))
+  }
+
+  // Get line width/x adjusted for cursor obstacle
+  function getCursorAdjusted(y, lh, contentW, cursor) {
+    let lineX = PAD, lineW = contentW
+    const lineMidY = y + lh / 2
+    const dy = lineMidY - cursor.y
+    if (Math.abs(dy) < cursor.r) {
+      const halfChord = Math.sqrt(cursor.r * cursor.r - dy * dy)
+      const obstacleLeft = cursor.x - halfChord
+      const obstacleRight = cursor.x + halfChord
+      if (obstacleLeft > 0 && obstacleRight < contentW) {
+        const leftSpace = obstacleLeft, rightSpace = contentW - obstacleRight
+        if (leftSpace >= rightSpace) { lineW = leftSpace - 4 }
+        else { lineX = PAD + obstacleRight + 4; lineW = rightSpace - 4 }
+      } else if (obstacleLeft <= 0) {
+        lineX = PAD + obstacleRight + 4; lineW = contentW - obstacleRight - 4
+      } else { lineW = obstacleLeft - 4 }
+    }
+    return { lineX, lineW }
+  }
 
   function render() {
-    // Smooth cursor following
     mouseX += (targetX - mouseX) * 0.15
     mouseY += (targetY - mouseY) * 0.15
 
@@ -173,55 +213,86 @@
     ctx.fillRect(0, 0, W, H)
 
     const contentW = W - PAD * 2
+    const cursor = { x: mouseX - PAD, y: mouseY, r: CURSOR_R }
     let y = PAD
 
     for (const block of prepared) {
-      // Check if cursor obstacle intersects this block's vertical zone
-      const cursor = { x: mouseX - PAD, y: mouseY, r: CURSOR_R }
+      if (block.type === 'table') {
+        // ── Table rendering with per-cell Pretext wrapping ──
+        const cols = block.headers.length
+        const cellPad = 5
+        const colW = contentW / cols
 
-      // Use layoutNextLine for variable-width wrapping around cursor
+        // Measure all cell heights to find row heights
+        function measureCell(prep, width) {
+          const result = layoutWithLines(prep, Math.max(width - cellPad * 2, 20), TABLE_LH)
+          return result.lines
+        }
+
+        // Header row
+        const headerH = 18
+        ctx.fillStyle = '#eeeef2'
+        ctx.fillRect(PAD, y, contentW, headerH)
+        ctx.font = TABLE_BOLD
+        ctx.fillStyle = '#1a1815'
+        block.headers.forEach((h, ci) => {
+          ctx.fillText(h, PAD + ci * colW + cellPad, y + 12)
+        })
+        // Header border
+        ctx.strokeStyle = '#d8d8dc'; ctx.lineWidth = 0.5
+        ctx.beginPath(); ctx.moveTo(PAD, y + headerH); ctx.lineTo(PAD + contentW, y + headerH); ctx.stroke()
+        // Column lines
+        for (let ci = 1; ci < cols; ci++) {
+          ctx.beginPath(); ctx.moveTo(PAD + ci * colW, y); ctx.lineTo(PAD + ci * colW, y + headerH); ctx.stroke()
+        }
+        y += headerH
+
+        // Data rows
+        block.rows.forEach((row, ri) => {
+          // Measure each cell to find row height
+          const cellLines = row.map((cell, ci) => measureCell(block._cellPreps[ri][ci], colW))
+          const maxLines = Math.max(...cellLines.map(l => l.length))
+          const rowH = Math.max(18, maxLines * TABLE_LH + cellPad * 2)
+
+          // Zebra stripe
+          if (ri % 2 === 0) {
+            ctx.fillStyle = '#f8f8fb'
+            ctx.fillRect(PAD, y, contentW, rowH)
+          }
+
+          // Cell text (wrapped by Pretext)
+          ctx.font = TABLE_FONT
+          ctx.fillStyle = '#3a3a44'
+          row.forEach((cell, ci) => {
+            const lines = cellLines[ci]
+            lines.forEach((line, li) => {
+              ctx.fillText(line.text, PAD + ci * colW + cellPad, y + cellPad + (li + 1) * TABLE_LH - 3)
+            })
+          })
+
+          // Row border
+          ctx.strokeStyle = '#e4e4e8'; ctx.lineWidth = 0.5
+          ctx.beginPath(); ctx.moveTo(PAD, y + rowH); ctx.lineTo(PAD + contentW, y + rowH); ctx.stroke()
+          // Column lines
+          for (let ci = 1; ci < cols; ci++) {
+            ctx.beginPath(); ctx.moveTo(PAD + ci * colW, y); ctx.lineTo(PAD + ci * colW, y + rowH); ctx.stroke()
+          }
+
+          y += rowH
+        })
+
+        y += 8
+        continue
+      }
+
+      // ── Text block — wraps around cursor ──
       let linesCursor = { segmentIndex: 0, graphemeIndex: 0 }
       let maxIter = 80
 
       while (maxIter-- > 0) {
         if (linesCursor.segmentIndex >= block.prep.segments.length) break
 
-        // Calculate available width for this line based on cursor proximity
-        const lineTop = y
-        const lineBot = y + block.lh
-        const lineMidY = y + block.lh / 2
-
-        let lineX = PAD
-        let lineW = contentW
-
-        // Check if cursor circle overlaps this line's vertical band
-        const dy = lineMidY - cursor.y
-        if (Math.abs(dy) < cursor.r) {
-          // How much horizontal space the cursor takes at this y
-          const halfChord = Math.sqrt(cursor.r * cursor.r - dy * dy)
-          const obstacleLeft = cursor.x - halfChord
-          const obstacleRight = cursor.x + halfChord
-
-          if (obstacleLeft > 0 && obstacleRight < contentW) {
-            // Cursor is in the middle — use the wider side
-            const leftSpace = obstacleLeft
-            const rightSpace = contentW - obstacleRight
-            if (leftSpace >= rightSpace) {
-              lineW = leftSpace - 4
-            } else {
-              lineX = PAD + obstacleRight + 4
-              lineW = rightSpace - 4
-            }
-          } else if (obstacleLeft <= 0) {
-            // Cursor on left edge
-            lineX = PAD + obstacleRight + 4
-            lineW = contentW - obstacleRight - 4
-          } else {
-            // Cursor on right edge
-            lineW = obstacleLeft - 4
-          }
-        }
-
+        const { lineX, lineW } = getCursorAdjusted(y, block.lh, contentW, cursor)
         if (lineW < 30) { y += block.lh; continue }
 
         const line = layoutNextLine(block.prep, linesCursor, Math.max(lineW, 30))
@@ -236,7 +307,7 @@
         y += block.lh
       }
 
-      y += 6 // gap between blocks
+      y += 6
     }
 
     // Draw cursor obstacle (subtle)
