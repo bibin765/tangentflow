@@ -166,6 +166,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     const lineHeight = fontSize * lineHeightMult
     const maxWidth = contentW - indent
     const segments = parseInline(text)
+    const regularFont = `${fontSize}px Helvetica`
 
     // Build styled character array: each char knows its style
     const chars = []
@@ -177,8 +178,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
     // Get plain text and use Pretext for line-breaking
     const plainText = chars.map(c => c.ch).join('')
-    const fontStr = `${fontSize}px Helvetica`
-    const prepared = prepareWithSegments(plainText, fontStr)
+    const prepared = prepareWithSegments(plainText, regularFont)
     const result = layoutWithLines(prepared, maxWidth, lineHeight)
 
     // Walk through lines, matching each line's text back to the styled chars
@@ -186,15 +186,14 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     for (const line of result.lines) {
       ensureSpace(lineHeight)
       const absY = contentTopY() - curY - fontSize
-
-      // Find which chars belong to this line by matching the line text
       const lineText = line.text
-      // Skip any leading whitespace that Pretext consumed between lines
+
+      // Skip leading whitespace consumed by Pretext between lines
       while (charPos < chars.length && chars[charPos].ch === ' ' && lineText.length > 0 && lineText[0] !== ' ') {
         charPos++
       }
 
-      // Build styled runs from the chars for this line length
+      // Build styled runs from the chars for this line
       const runs = []
       let currentStyle = null
       let currentUrl = null
@@ -216,26 +215,40 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       }
       if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl })
 
-      // Render each run at the correct x position
-      // Use regular font for width measurement to match Pretext's line-breaking
-      let x = margin + indent
+      // Position each run by measuring the prefix before it with Pretext
+      // This ensures positions match exactly what Pretext calculated
+      const baseX = margin + indent
+      let prefixLen = 0
+
       for (const run of runs) {
         if (!run.text) continue
         const fk = run.style === 'bold' ? 'bold' : run.style === 'italic' ? 'italic' : 'regular'
         const runColor = run.style === 'link' ? c.accent : color
 
+        // Measure the prefix text (everything before this run) to get exact x position
+        let x = baseX
+        if (prefixLen > 0) {
+          const prefix = lineText.slice(0, prefixLen)
+          const prefixPrep = prepareWithSegments(prefix, regularFont)
+          const prefixResult = layoutWithLines(prefixPrep, 99999, lineHeight)
+          x = baseX + (prefixResult.lines[0]?.width || 0)
+        }
+
+        // Measure this run with regular font for underline/link width
+        const runPrep = prepareWithSegments(run.text, regularFont)
+        const runResult = layoutWithLines(runPrep, 99999, lineHeight)
+        const runW = runResult.lines[0]?.width || 0
+
         addDrawCmd({ type: 'text', text: run.text, x, y: absY, fontSize, fontKey: fk, color: runColor })
 
-        // Measure with regular font to match Pretext's layout
-        const runW = measureRunWidth(run.text, fontSize, 'regular')
-        x += runW
-
         if (run.style === 'underline' || run.style === 'link') {
-          addDrawCmd({ type: 'line', x1: x - runW, y1: absY - 1, x2: x, y2: absY - 1, color: runColor, lineWidth: 0.5 })
+          addDrawCmd({ type: 'line', x1: x, y1: absY - 1, x2: x + runW, y2: absY - 1, color: runColor, lineWidth: 0.5 })
         }
         if (run.style === 'link' && run.url) {
-          addDrawCmd({ type: 'link', x: x - runW, y: absY - 2, w: runW, h: fontSize + 4, url: run.url })
+          addDrawCmd({ type: 'link', x, y: absY - 2, w: runW, h: fontSize + 4, url: run.url })
         }
+
+        prefixLen += run.text.length
       }
 
       charPos += lineText.length
