@@ -1,4 +1,4 @@
-# TangentFlow 
+# TangentFlow  
 
 PDF document generation with pixel-perfect text wrapping. Powered by [Pretext](https://github.com/chenglou/pretext).
 
