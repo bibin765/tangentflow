@@ -94,7 +94,7 @@
     </div>
   </section>
 
-  <!-- ── Live Reflow Demo ─────────────────────────────────── -->
+  <!-- ── Interactive Text Reflow ────────────────────────── -->
   <section class="section" id="live-demo">
     <div class="container">
       <div style="background:var(--color-surface);border:1px solid var(--color-border-light);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.04);">
@@ -108,19 +108,14 @@
             </div>
             <span style="font-size:12px;color:var(--color-text-muted);font-family:var(--font-mono);">document.pdf</span>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <label style="font-size:11px;color:var(--color-text-muted);margin:0;">Width</label>
-            <input type="range" id="demo-width" min="240" max="560" value="480" style="width:120px;accent-color:var(--color-accent);" />
-            <span id="demo-width-val" style="font-size:11px;color:var(--color-text-muted);min-width:35px;font-family:var(--font-mono);">480px</span>
-          </div>
         </div>
         <!-- Canvas area -->
-        <div style="display:flex;justify-content:center;padding:24px;background:var(--color-bg-alt);min-height:360px;" id="demo-canvas-wrap">
+        <div style="display:flex;justify-content:center;padding:24px;background:var(--color-bg-alt);min-height:380px;cursor:crosshair;" id="demo-canvas-wrap">
           <canvas id="demo-canvas" style="box-shadow:0 2px 12px rgba(0,0,0,0.06);border-radius:2px;"></canvas>
         </div>
         <!-- Bottom caption -->
         <div style="padding:10px 20px;font-size:12px;color:var(--color-text-muted);text-align:center;border-top:1px solid var(--color-border-light);">
-          Drag the slider &mdash; text reflows in real-time using Pretext's <code style="background:var(--color-bg-alt);padding:1px 5px;border-radius:3px;font-size:11px;">layoutWithLines()</code> &bull; Every language, every script, pixel-perfect
+          Move your cursor over the document &mdash; text reflows around it in real-time using Pretext's <code style="background:var(--color-bg-alt);padding:1px 5px;border-radius:3px;font-size:11px;">layoutNextLine()</code>
         </div>
       </div>
     </div>
@@ -134,159 +129,157 @@
   }
   </script>
   <script type="module">
-  import { prepareWithSegments, layoutWithLines } from '@chenglou/pretext'
+  import { prepareWithSegments, layoutWithLines, layoutNextLine } from '@chenglou/pretext'
 
   const canvas = document.getElementById('demo-canvas')
   const ctx = canvas.getContext('2d')
-  const slider = document.getElementById('demo-width')
-  const valLabel = document.getElementById('demo-width-val')
+  const wrap = document.getElementById('demo-canvas-wrap')
 
-  const CONTENT = [
-    { type: 'heading', text: 'Quarterly Revenue Report', font: 'bold 18px Helvetica, sans-serif', size: 18, lh: 22, color: '#1a1815', gap: 6 },
-    { type: 'text', text: 'Overall revenue grew 23% year-over-year, driven by expansion in Asia Pacific and strong adoption of the enterprise product tier across all segments.', font: '11px Helvetica, sans-serif', size: 11, lh: 17, color: '#4a4a50', gap: 12 },
-    { type: 'table', headers: ['Region', 'Revenue', 'Growth'], rows: [['North America', '$14.1M', '+13.7%'], ['Asia Pacific', '$7.8M', '+52.9%'], ['Europe & UK', '$10.2M', '+17.2%']], gap: 12 },
-    { type: 'heading', text: 'Key Initiatives', font: 'bold 13px Helvetica, sans-serif', size: 13, lh: 17, color: '#1a1815', gap: 4 },
-    { type: 'list', items: ['Launch AI analytics module with predictive insights', 'Expand into Southeast Asian market', 'Rollout partner certification program'], font: '11px Helvetica, sans-serif', size: 11, lh: 16, color: '#4a4a50', gap: 10 },
-    { type: 'text', text: '\u201CThis quarter represents a turning point for global expansion.\u201D \u2014 CEO', font: 'italic 11px Georgia, serif', size: 11, lh: 17, color: '#6b6560', gap: 8 },
-    { type: 'multilang', texts: [
-      { label: 'Japanese', text: '\u56DB\u534A\u671F\u306E\u53CE\u76CA\u306F\u524D\u5E74\u540C\u671F\u6BD4\u3067\u5927\u5E45\u306B\u589E\u52A0\u3057\u307E\u3057\u305F', font: '11px sans-serif' },
-      { label: 'Arabic', text: '\u0646\u0645\u0648 \u0627\u0644\u0625\u064A\u0631\u0627\u062F\u0627\u062A \u0628\u0646\u0633\u0628\u0629 \u0643\u0628\u064A\u0631\u0629 \u0647\u0630\u0627 \u0627\u0644\u0631\u0628\u0639', font: '11px sans-serif' },
-      { label: 'Hindi', text: '\u0924\u093F\u092E\u093E\u0939\u0940 \u0930\u093E\u091C\u0938\u094D\u0935 \u092E\u0947\u0902 \u0909\u0932\u094D\u0932\u0947\u0916\u0928\u0940\u092F \u0935\u0943\u0926\u094D\u0927\u093F \u0939\u0941\u0908', font: '11px sans-serif' },
-    ], size: 11, lh: 16, gap: 0 },
+  const W = 540, H = 420, PAD = 28, SCALE = 2
+  const CURSOR_R = 50 // cursor obstacle radius
+
+  let mouseX = -200, mouseY = -200 // off-screen initially
+  let targetX = -200, targetY = -200
+  let raf = null
+
+  canvas.width = W * SCALE
+  canvas.height = H * SCALE
+  canvas.style.width = W + 'px'
+  canvas.style.height = H + 'px'
+
+  // Text blocks to render
+  const BLOCKS = [
+    { text: 'Quarterly Revenue Report', font: 'bold 19px Helvetica, sans-serif', size: 19, lh: 24, color: '#1a1815' },
+    { text: 'Overall revenue grew 23% year-over-year, driven primarily by expansion in the Asia Pacific region and strong enterprise adoption. Customer retention remained at 94.2% while average deal size increased from $48K to $62K, reflecting successful upsell initiatives across all product tiers.', font: '11.5px Helvetica, sans-serif', size: 11.5, lh: 18, color: '#4a4a50' },
+    { text: 'Key Initiatives for Next Quarter', font: 'bold 14px Helvetica, sans-serif', size: 14, lh: 19, color: '#1a1815' },
+    { text: 'Launch of AI-powered predictive analytics module targeting enterprise customers in financial services. Expansion into Southeast Asian markets starting with Singapore and Indonesia. Migration of 200+ legacy accounts to the new unified platform with zero-downtime deployment strategy.', font: '11.5px Helvetica, sans-serif', size: 11.5, lh: 18, color: '#4a4a50' },
+    { text: '\u56DB\u534A\u671F\u306E\u53CE\u76CA\u306F\u524D\u5E74\u540C\u671F\u6BD4\u3067\u5927\u5E45\u306B\u589E\u52A0\u3057\u307E\u3057\u305F\u3002\u30A2\u30B8\u30A2\u592A\u5E73\u6D0B\u5730\u57DF\u3067\u306E\u62E1\u5927\u304C\u7279\u306B\u9855\u8457\u3067\u3059\u3002', font: '11.5px sans-serif', size: 11.5, lh: 18, color: '#5a5a60' },
+    { text: '\u0924\u093F\u092E\u093E\u0939\u0940 \u0930\u093E\u091C\u0938\u094D\u0935 \u092E\u0947\u0902 \u0909\u0932\u094D\u0932\u0947\u0916\u0928\u0940\u092F \u0935\u0943\u0926\u094D\u0927\u093F \u0939\u0941\u0908 \u0939\u0948\u0964 \u090F\u0936\u093F\u092F\u093E \u092A\u094D\u0930\u0936\u093E\u0902\u0924 \u0915\u094D\u0937\u0947\u0924\u094D\u0930 \u092E\u0947\u0902 \u0935\u093F\u0938\u094D\u0924\u093E\u0930 \u0914\u0930 \u0909\u0926\u094D\u092F\u092E \u0909\u0924\u094D\u092A\u093E\u0926 \u0938\u094D\u0924\u0930 \u0915\u0947 \u092E\u091C\u092C\u0942\u0924 \u0905\u092A\u0928\u093E\u0928\u0947 \u0938\u0947 \u092F\u0939 \u0938\u0902\u092D\u0935 \u0939\u0941\u0906\u0964', font: '11.5px sans-serif', size: 11.5, lh: 18, color: '#5a5a60' },
   ]
 
+  // Pre-prepare all text segments (one-time cost)
+  const prepared = BLOCKS.map(b => ({
+    ...b,
+    prep: prepareWithSegments(b.text, b.font),
+  }))
+
   function render() {
-    const maxW = parseInt(slider.value)
-    valLabel.textContent = maxW + 'px'
-    const pad = 24
-    const contentW = maxW - pad * 2
-    const scale = 2
+    // Smooth cursor following
+    mouseX += (targetX - mouseX) * 0.15
+    mouseY += (targetY - mouseY) * 0.15
 
-    // First pass: measure height
-    let totalH = pad
-    const laid = []
-    for (const block of CONTENT) {
-      if (block.type === 'heading' || block.type === 'text') {
-        const prep = prepareWithSegments(block.text, block.font)
-        const result = layoutWithLines(prep, contentW, block.lh)
-        laid.push({ ...block, lines: result.lines })
-        totalH += result.lines.length * block.lh + block.gap
-      } else if (block.type === 'table') {
-        const rowH = 20, headerH = 22
-        laid.push(block)
-        totalH += headerH + block.rows.length * rowH + block.gap
-      } else if (block.type === 'list') {
-        const items = []
-        for (const item of block.items) {
-          const prep = prepareWithSegments(item, block.font)
-          const result = layoutWithLines(prep, contentW - 14, block.lh)
-          items.push(result.lines)
-          totalH += result.lines.length * block.lh + 2
-        }
-        laid.push({ ...block, laidItems: items })
-        totalH += block.gap
-      } else if (block.type === 'multilang') {
-        laid.push(block)
-        for (const t of block.texts) {
-          const prep = prepareWithSegments(t.text, t.font)
-          const result = layoutWithLines(prep, contentW - 50, block.lh)
-          t._lines = result.lines
-          totalH += result.lines.length * block.lh + 3
-        }
-        totalH += block.gap + 6
-      }
-    }
-    totalH += pad
-
-    canvas.width = maxW * scale
-    canvas.height = totalH * scale
-    canvas.style.width = maxW + 'px'
-    canvas.style.height = totalH + 'px'
-    ctx.scale(scale, scale)
-
-    // White bg
+    ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0)
     ctx.fillStyle = '#fff'
-    ctx.fillRect(0, 0, maxW, totalH)
+    ctx.fillRect(0, 0, W, H)
 
-    let y = pad
-    for (const block of laid) {
-      if (block.type === 'heading' || block.type === 'text') {
-        ctx.font = block.font
-        ctx.fillStyle = block.color
-        for (const line of block.lines) {
-          ctx.fillText(line.text, pad, y + block.size * 0.85)
-          y += block.lh
+    const contentW = W - PAD * 2
+    let y = PAD
+
+    for (const block of prepared) {
+      // Check if cursor obstacle intersects this block's vertical zone
+      const cursor = { x: mouseX - PAD, y: mouseY, r: CURSOR_R }
+
+      // Use layoutNextLine for variable-width wrapping around cursor
+      let linesCursor = { segmentIndex: 0, graphemeIndex: 0 }
+      let maxIter = 80
+
+      while (maxIter-- > 0) {
+        if (linesCursor.segmentIndex >= block.prep.segments.length) break
+
+        // Calculate available width for this line based on cursor proximity
+        const lineTop = y
+        const lineBot = y + block.lh
+        const lineMidY = y + block.lh / 2
+
+        let lineX = PAD
+        let lineW = contentW
+
+        // Check if cursor circle overlaps this line's vertical band
+        const dy = lineMidY - cursor.y
+        if (Math.abs(dy) < cursor.r) {
+          // How much horizontal space the cursor takes at this y
+          const halfChord = Math.sqrt(cursor.r * cursor.r - dy * dy)
+          const obstacleLeft = cursor.x - halfChord
+          const obstacleRight = cursor.x + halfChord
+
+          if (obstacleLeft > 0 && obstacleRight < contentW) {
+            // Cursor is in the middle — use the wider side
+            const leftSpace = obstacleLeft
+            const rightSpace = contentW - obstacleRight
+            if (leftSpace >= rightSpace) {
+              lineW = leftSpace - 4
+            } else {
+              lineX = PAD + obstacleRight + 4
+              lineW = rightSpace - 4
+            }
+          } else if (obstacleLeft <= 0) {
+            // Cursor on left edge
+            lineX = PAD + obstacleRight + 4
+            lineW = contentW - obstacleRight - 4
+          } else {
+            // Cursor on right edge
+            lineW = obstacleLeft - 4
+          }
         }
-        y += block.gap
-      } else if (block.type === 'table') {
-        const cols = block.headers.length
-        const colW = contentW / cols
-        const headerH = 22, rowH = 20
-        // Header bg
-        ctx.fillStyle = '#f0f0f4'
-        ctx.fillRect(pad, y, contentW, headerH)
-        ctx.font = 'bold 10px Helvetica, sans-serif'
-        ctx.fillStyle = '#1a1815'
-        block.headers.forEach((h, ci) => {
-          ctx.fillText(h, pad + ci * colW + 6, y + 14)
-        })
-        y += headerH
-        // Rows
-        block.rows.forEach((row, ri) => {
-          if (ri % 2 === 0) { ctx.fillStyle = '#f8f8fb'; ctx.fillRect(pad, y, contentW, rowH) }
-          ctx.font = '10px Helvetica, sans-serif'
-          ctx.fillStyle = '#3a3a44'
-          row.forEach((cell, ci) => { ctx.fillText(cell, pad + ci * colW + 6, y + 14) })
-          // Row border
-          ctx.strokeStyle = '#e8e8ec'; ctx.lineWidth = 0.5
-          ctx.beginPath(); ctx.moveTo(pad, y + rowH); ctx.lineTo(pad + contentW, y + rowH); ctx.stroke()
-          y += rowH
-        })
-        y += block.gap
-      } else if (block.type === 'list') {
+
+        if (lineW < 30) { y += block.lh; continue }
+
+        const line = layoutNextLine(block.prep, linesCursor, Math.max(lineW, 30))
+        if (!line) break
+        if (line.end.segmentIndex === linesCursor.segmentIndex && line.end.graphemeIndex === linesCursor.graphemeIndex) break
+
         ctx.font = block.font
         ctx.fillStyle = block.color
-        block.laidItems.forEach(lines => {
-          lines.forEach((line, li) => {
-            if (li === 0) { ctx.fillStyle = '#9b9590'; ctx.fillText('\u2022', pad + 2, y + block.size * 0.85); ctx.fillStyle = block.color }
-            ctx.fillText(line.text, pad + 14, y + block.size * 0.85)
-            y += block.lh
-          })
-          y += 2
-        })
-        y += block.gap
-      } else if (block.type === 'multilang') {
-        // Accent bar
-        ctx.fillStyle = '#5c7a64'
-        ctx.fillRect(pad, y, 3, 0)
-        const startY = y
-        y += 3
-        block.texts.forEach(t => {
-          // Label
-          ctx.font = 'bold 9px Helvetica, sans-serif'
-          ctx.fillStyle = '#9b9590'
-          ctx.fillText(t.label, pad + 8, y + 9)
-          // Text
-          ctx.font = t.font
-          ctx.fillStyle = '#4a4a50'
-          t._lines.forEach(line => {
-            ctx.fillText(line.text, pad + 50, y + block.size * 0.85)
-            y += block.lh
-          })
-          y += 3
-        })
-        // Draw bar
-        ctx.fillStyle = '#5c7a6430'
-        ctx.fillRect(pad, startY, contentW, y - startY)
-        ctx.fillStyle = '#5c7a64'
-        ctx.fillRect(pad, startY, 3, y - startY)
-        y += block.gap
+        ctx.fillText(line.text, lineX, y + block.size * 0.85)
+
+        linesCursor = line.end
+        y += block.lh
       }
+
+      y += 6 // gap between blocks
     }
+
+    // Draw cursor obstacle (subtle)
+    if (mouseX > 0 && mouseX < W && mouseY > 0 && mouseY < H) {
+      ctx.beginPath()
+      ctx.arc(mouseX, mouseY, CURSOR_R, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(92, 122, 100, 0.06)'
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(92, 122, 100, 0.15)'
+      ctx.lineWidth = 1
+      ctx.stroke()
+    }
+
+    raf = requestAnimationFrame(render)
   }
 
-  slider.addEventListener('input', render)
-  document.fonts.ready.then(render)
+  // Track cursor position relative to canvas
+  wrap.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect()
+    targetX = (e.clientX - rect.left) * (W / rect.width)
+    targetY = (e.clientY - rect.top) * (H / rect.height)
+  })
+
+  wrap.addEventListener('mouseleave', () => {
+    targetX = -200
+    targetY = -200
+  })
+
+  // Touch support
+  wrap.addEventListener('touchmove', e => {
+    e.preventDefault()
+    const rect = canvas.getBoundingClientRect()
+    const touch = e.touches[0]
+    targetX = (touch.clientX - rect.left) * (W / rect.width)
+    targetY = (touch.clientY - rect.top) * (H / rect.height)
+  }, { passive: false })
+
+  wrap.addEventListener('touchend', () => {
+    targetX = -200
+    targetY = -200
+  })
+
+  document.fonts.ready.then(() => { render() })
   render()
   </script>
 
