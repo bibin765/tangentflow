@@ -709,41 +709,91 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
   }
 
   // ─── Header & Footer on every page ──────────────────────
+  // Truncate text to fit within maxWidth, adding ellipsis if needed
+  function truncateToFit(text, font, maxWidth) {
+    if (maxWidth <= 0) return ''
+    const prep = prepareWithSegments(text, font)
+    const result = layoutWithLines(prep, 99999, 20)
+    const fullW = result.lines[0]?.width || 0
+    if (fullW <= maxWidth) return text
+    // Binary search for truncation point
+    let lo = 0, hi = text.length, best = ''
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      const candidate = text.slice(0, mid) + '\u2026'
+      const p = prepareWithSegments(candidate, font)
+      const r = layoutWithLines(p, 99999, 20)
+      if ((r.lines[0]?.width || 0) <= maxWidth) {
+        best = candidate
+        lo = mid + 1
+      } else {
+        hi = mid - 1
+      }
+    }
+    return best || '\u2026'
+  }
+
   function addHeadersFooters() {
     if (!hf) return
     const total = pages.length
+    const hfContentW = contentW
+
     pages.forEach((cmds, pi) => {
       // Header
       if (headerH > 0) {
         const hTop = pageH - margin
+        let leftEndX = margin // tracks where left content ends
+
         // Logo
         if (hf._logoImg && hf.logoSrc) {
           const logoMaxH = 20
           const aspect = hf._logoW / hf._logoH
           const logoW = logoMaxH * aspect
           cmds.push({ type: 'image', img: hf._logoImg, src: hf.logoSrc, x: margin, y: hTop - logoMaxH - 2, w: logoW, h: logoMaxH })
-          // Left text shifted right of logo
+          leftEndX = margin + logoW + 8
           if (hf.headerLeft) {
-            cmds.push({ type: 'text', text: hf.headerLeft, x: margin + logoW + 8, y: hTop - 14, fontSize: 9, fontKey: 'bold', color: c.heading })
+            // Measure left text width
+            const leftFont = 'bold 9px Helvetica'
+            const leftPrep = prepareWithSegments(hf.headerLeft, leftFont)
+            const leftW = layoutWithLines(leftPrep, 99999, 14).lines[0]?.width || 0
+            cmds.push({ type: 'text', text: hf.headerLeft, x: leftEndX, y: hTop - 14, fontSize: 9, fontKey: 'bold', color: c.heading })
+            leftEndX += leftW + 12
           }
         } else if (hf.headerLeft) {
+          const leftFont = 'bold 9px Helvetica'
+          const leftPrep = prepareWithSegments(hf.headerLeft, leftFont)
+          const leftW = layoutWithLines(leftPrep, 99999, 14).lines[0]?.width || 0
           cmds.push({ type: 'text', text: hf.headerLeft, x: margin, y: hTop - 14, fontSize: 9, fontKey: 'bold', color: c.heading })
+          leftEndX = margin + leftW + 12
         }
+
         if (hf.headerRight) {
-          cmds.push({ type: 'text', text: hf.headerRight, x: pageW - margin, y: hTop - 14, fontSize: 9, fontKey: 'regular', color: c.muted, align: 'right' })
+          // Available space for right text = total width - left content used
+          const rightAvail = pageW - margin - leftEndX
+          const rightFont = '9px Helvetica'
+          const truncated = truncateToFit(hf.headerRight, rightFont, rightAvail)
+          if (truncated) {
+            cmds.push({ type: 'text', text: truncated, x: pageW - margin, y: hTop - 14, fontSize: 9, fontKey: 'regular', color: c.muted, align: 'right' })
+          }
         }
-        // Header separator line
+
         cmds.push({ type: 'line', x1: margin, y1: hTop - headerH + 4, x2: pageW - margin, y2: hTop - headerH + 4, color: c.divider })
       }
 
       // Footer
       if (footerH > 0) {
         const fBot = margin + footerH
-        // Footer separator line
         cmds.push({ type: 'line', x1: margin, y1: fBot - 4, x2: pageW - margin, y2: fBot - 4, color: c.divider })
 
+        let footerLeftEndX = margin
+
         if (hf.footerLeft) {
-          cmds.push({ type: 'text', text: hf.footerLeft, x: margin, y: fBot - 18, fontSize: 8, fontKey: 'regular', color: c.muted })
+          const leftFont = '8px Helvetica'
+          const leftPrep = prepareWithSegments(hf.footerLeft, leftFont)
+          const leftW = layoutWithLines(leftPrep, 99999, 14).lines[0]?.width || 0
+          const truncated = truncateToFit(hf.footerLeft, leftFont, hfContentW * 0.6)
+          cmds.push({ type: 'text', text: truncated, x: margin, y: fBot - 18, fontSize: 8, fontKey: 'regular', color: c.muted })
+          footerLeftEndX = margin + leftW + 12
         }
 
         let footerRight = ''
@@ -751,7 +801,12 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
         else if (hf.footerRightMode === 'custom') footerRight = hf.footerCustom || ''
 
         if (footerRight) {
-          cmds.push({ type: 'text', text: footerRight, x: pageW - margin, y: fBot - 18, fontSize: 8, fontKey: 'regular', color: c.muted, align: 'right' })
+          const rightAvail = pageW - margin - footerLeftEndX
+          const rightFont = '8px Helvetica'
+          const truncated = truncateToFit(footerRight, rightFont, rightAvail)
+          if (truncated) {
+            cmds.push({ type: 'text', text: truncated, x: pageW - margin, y: fBot - 18, fontSize: 8, fontKey: 'regular', color: c.muted, align: 'right' })
+          }
         }
       }
     })
