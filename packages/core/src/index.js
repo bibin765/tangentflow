@@ -93,7 +93,10 @@ export function createDocument(options = {}) {
   const margin = pageConfig.margin || 60
   const colors = parseColors(options.colors)
   const headerFooter = options.headerFooter || null
-  const watermark = options.watermark || null
+  const watermark = options.watermark ? {
+    ...options.watermark,
+    color: options.watermark.color ? parseColor(options.watermark.color, 'watermark') : [0.8, 0.8, 0.8],
+  } : null
   const blocks = []
 
   const builder = {

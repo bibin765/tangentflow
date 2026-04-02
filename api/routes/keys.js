@@ -1,25 +1,6 @@
 import { createApiKey, getKeysByUser, getApiKey, deactivateKey } from '../db/db.js'
 
 export default async function keysRoute(fastify) {
-  // Sign up for a free API key (no auth required)
-  fastify.post('/v1/signup', async (request, reply) => {
-    const { email } = request.body || {}
-
-    if (!email || !email.includes('@')) {
-      return reply.status(400).send({ error: 'Valid email required' })
-    }
-
-    const userId = email.toLowerCase().trim()
-    const key = createApiKey(userId, email, 'free')
-
-    return reply.status(201).send({
-      apiKey: key.id,
-      tier: key.tier,
-      monthlyLimit: key.monthlyLimit,
-      message: 'Your API key is ready. Include it as: Authorization: Bearer ' + key.id,
-    })
-  })
-
   // Get usage stats (authenticated)
   fastify.get('/v1/usage', async (request, reply) => {
     // Auth check is done by middleware on this route

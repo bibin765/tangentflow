@@ -1,0 +1,1 @@
+{"error":"PDF generation failed","message":"`red` must be of type `number`, but was actually of type `string`"}

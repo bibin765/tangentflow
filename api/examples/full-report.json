@@ -1,0 +1,162 @@
+{
+  "page": { "size": "a4", "orientation": "portrait", "margin": 60 },
+  "colors": {
+    "heading": "#0f1b2d",
+    "body": "#2c3e50",
+    "accent": "#2980b9",
+    "tableHeader": "#1a3a5c",
+    "tableStripe": "#f4f8fb",
+    "divider": "#bdc3c7",
+    "quoteBar": "#2980b9",
+    "statBg": "#eaf2f8",
+    "muted": "#7f8c8d"
+  },
+  "metadata": {
+    "title": "Nextera Global Holdings — Q4 2025 Workforce Intelligence Report",
+    "author": "People Analytics Team",
+    "subject": "Quarterly workforce metrics, talent acquisition, retention, and DEI analysis"
+  },
+  "watermark": {
+    "text": "CONFIDENTIAL",
+    "color": "#bdc3c7",
+    "opacity": 0.06
+  },
+  "headerFooter": {
+    "headerLeft": "Nextera Global Holdings",
+    "headerRight": "Q4 2025 Workforce Intelligence Report",
+    "footerLeft": "Confidential — Internal Use Only",
+    "footerRightMode": "page-number"
+  },
+  "blocks": [
+    { "type": "heading", "text": "Workforce Intelligence Report", "level": 1 },
+    { "type": "paragraph", "text": "Q4 2025 — Comprehensive Analysis" },
+    { "type": "spacer", "height": 4 },
+    { "type": "key-value", "items": "Reporting Period: October 1 — December 31, 2025\nPrepared By: People Analytics Team\nDistribution: Executive Leadership, Board of Directors\nClassification: Confidential — Internal Use Only\nReport Version: 3.2 Final" },
+
+    { "type": "divider" },
+
+    { "type": "heading", "text": "Executive Summary", "level": 2 },
+    { "type": "paragraph", "text": "Nextera Global Holdings closed Q4 2025 with a **total headcount of 9,450** across 23 countries, representing a **net increase of 312 employees** (+3.4%) from Q3. The growth was driven primarily by engineering (+142) and product (+87) teams, aligned with our strategic investment in the AI platform initiative." },
+    { "type": "paragraph", "text": "Key highlights include a *record-low attrition rate* of 2.1%, successful completion of the Singapore office expansion, and the launch of our __Returnship Program__ which brought 34 experienced professionals back into the workforce after career breaks." },
+
+    { "type": "spacer", "height": 8 },
+    { "type": "stat-row", "items": [
+      { "label": "Total Headcount", "value": "9,450" },
+      { "label": "Net Growth (Q/Q)", "value": "+312" },
+      { "label": "Attrition Rate", "value": "2.1%" },
+      { "label": "Open Positions", "value": "442" },
+      { "label": "Avg Time-to-Fill", "value": "34 days" }
+    ]},
+
+    { "type": "heading", "text": "Headcount by Region", "level": 2 },
+    { "type": "table",
+      "headers": "Region, Q3 Headcount, Q4 Headcount, Change, % of Total, Key Driver",
+      "rows": "North America, 4180, 4295, +115, 45.4%, Engineering hiring surge for AI platform\nEurope (EMEA), 2340, 2412, +72, 25.5%, Dublin and Berlin office expansion\nAsia Pacific, 1650, 1798, +148, 19.0%, Singapore hub launch — 89 new hires in Q4\nLatin America, 520, 548, +28, 5.8%, Brazil remote engineering team growth\nMiddle East & Africa, 370, 397, +27, 4.2%, Dubai customer success center ramp-up",
+      "align": ["left", "right", "right", "right", "right", "left"],
+      "colWidths": [100, 70, 70, 50, 55, "auto"],
+      "borders": { "outer": true, "header": true, "rows": true, "columns": true, "width": 0.5 }
+    },
+
+    { "type": "heading", "text": "Department Distribution", "level": 2 },
+    { "type": "table",
+      "headers": "Department, Headcount, % of Total, Q/Q Growth, Avg Tenure, Attrition",
+      "rows": "Engineering, 3280, 34.7%, +4.5%, 3.8 yrs, 1.8%\nProduct & Design, 890, 9.4%, +10.8%, 2.9 yrs, 2.4%\nSales & Marketing, 1650, 17.5%, +1.2%, 2.5 yrs, 3.1%\nCustomer Success, 1120, 11.9%, +3.7%, 2.1 yrs, 2.8%\nOperations & Finance, 980, 10.4%, +0.5%, 4.2 yrs, 1.2%\nPeople & Culture, 340, 3.6%, +2.1%, 3.5 yrs, 1.5%\nLegal & Compliance, 210, 2.2%, 0.0%, 5.1 yrs, 0.9%\nExecutive & Strategy, 180, 1.9%, +1.1%, 6.3 yrs, 0.6%\nIT & Infrastructure, 800, 8.5%, +2.8%, 3.1 yrs, 2.0%",
+      "align": ["left", "right", "right", "right", "right", "right"],
+      "borders": { "outer": true, "header": true, "rows": true, "columns": true }
+    },
+
+    { "type": "heading", "text": "Talent Acquisition", "level": 2 },
+    { "type": "paragraph", "text": "Q4 saw **1,847 applications** processed across all open roles, with an overall offer acceptance rate of **89.2%** — up from 84.7% in Q3. The improvement is attributed to revised compensation bands and the introduction of our flexible work policy." },
+
+    { "type": "stat-row", "items": [
+      { "label": "Applications", "value": "1,847" },
+      { "label": "Interviews", "value": "623" },
+      { "label": "Offers Made", "value": "389" },
+      { "label": "Offers Accepted", "value": "347" },
+      { "label": "Acceptance Rate", "value": "89.2%" }
+    ]},
+
+    { "type": "spacer", "height": 6 },
+    { "type": "heading", "text": "Hiring Pipeline by Source", "level": 3 },
+    { "type": "table",
+      "headers": "Source, Applications, Hires, Conversion, Cost per Hire, Quality Score",
+      "rows": "Employee Referrals, 312, 98, 31.4%, $2,100, 4.6/5.0\nLinkedIn, 524, 89, 17.0%, $4,800, 4.1/5.0\nDirect Applications, 441, 72, 16.3%, $1,200, 3.9/5.0\nRecruiting Agencies, 187, 45, 24.1%, $12,500, 4.3/5.0\nUniversity Programs, 203, 28, 13.8%, $3,200, 4.0/5.0\nConferences & Events, 98, 11, 11.2%, $6,800, 4.4/5.0\nReturnership Program, 82, 34, 41.5%, $1,800, 4.7/5.0",
+      "align": ["left", "right", "right", "right", "right", "center"]
+    },
+
+    { "type": "quote", "text": "The Returnship Program delivered the highest conversion rate (41.5%) and quality score (4.7/5.0) of any hiring channel this quarter. We recommend expanding it from 3 to 8 partner organizations in Q1 2026.", "attribution": "VP of Talent Acquisition" },
+
+    { "type": "heading", "text": "Retention & Engagement", "level": 2 },
+    { "type": "paragraph", "text": "Voluntary attrition dropped to **2.1%** in Q4, the lowest in company history. This represents 198 voluntary departures against an average headcount of 9,294. The primary drivers of the improvement were:" },
+
+    { "type": "bullet-list", "items": "Revised compensation bands aligned to 75th percentile market data (+8.2% avg increase)\nExpanded flexible work policy — 73% of employees now work hybrid or fully remote\nLaunch of career pathing tool with AI-powered skill gap analysis\nManager effectiveness program reduced regrettable attrition by 34%\nMental health benefits expansion including 12 free therapy sessions per year" },
+
+    { "type": "spacer", "height": 6 },
+    { "type": "heading", "text": "Engagement Survey Results", "level": 3 },
+    { "type": "paragraph", "text": "The Q4 pulse survey achieved a **92% response rate** (8,694 of 9,450 employees). Key metrics compared to Q3:" },
+
+    { "type": "table",
+      "headers": "Metric, Q3 Score, Q4 Score, Change, Industry Avg, vs Industry",
+      "rows": "Overall Engagement, 4.1/5.0, 4.3/5.0, +0.2, 3.8/5.0, +13.2%\neNPS (Employee Net Promoter), +38, +47, +9, +22, +113.6%\nManager Effectiveness, 4.0/5.0, 4.2/5.0, +0.2, 3.7/5.0, +13.5%\nCareer Development, 3.6/5.0, 4.0/5.0, +0.4, 3.4/5.0, +17.6%\nWork-Life Balance, 3.9/5.0, 4.1/5.0, +0.2, 3.5/5.0, +17.1%\nCompensation Satisfaction, 3.4/5.0, 3.9/5.0, +0.5, 3.3/5.0, +18.2%\nDEI Belonging, 4.2/5.0, 4.4/5.0, +0.2, 3.6/5.0, +22.2%",
+      "align": ["left", "center", "center", "center", "center", "center"],
+      "borders": { "outer": true, "header": true, "rows": true, "columns": true }
+    },
+
+    { "type": "heading", "text": "Diversity, Equity & Inclusion", "level": 2 },
+    { "type": "paragraph", "text": "Nextera continues to make progress on DEI commitments. Q4 highlights include reaching **43% female representation** in technical roles (up from 38% in Q1) and achieving __pay equity certification__ from an independent auditor." },
+
+    { "type": "stat-row", "items": [
+      { "label": "Gender Diversity", "value": "43% F / 57% M" },
+      { "label": "Leadership Diversity", "value": "39% URM" },
+      { "label": "Pay Equity Gap", "value": "< 1.2%" },
+      { "label": "DEI Training", "value": "97% Complete" }
+    ]},
+
+    { "type": "spacer", "height": 6 },
+    { "type": "heading", "text": "Representation by Level", "level": 3 },
+    { "type": "table",
+      "headers": "Level, Total, Female, Male, Non-Binary, URM, Disability",
+      "rows": "Individual Contributor, 6820, 44.1%, 54.2%, 1.7%, 32.4%, 8.2%\nSenior IC / Lead, 1230, 41.8%, 56.9%, 1.3%, 28.7%, 6.1%\nManager, 780, 39.2%, 59.6%, 1.2%, 26.3%, 5.4%\nSenior Manager / Director, 420, 36.7%, 62.1%, 1.2%, 23.8%, 4.9%\nVP and Above, 145, 34.5%, 64.8%, 0.7%, 22.1%, 3.4%\nC-Suite, 55, 38.2%, 61.8%, 0.0%, 25.5%, 1.8%",
+      "align": ["left", "right", "right", "right", "right", "right", "right"],
+      "borders": { "outer": true, "header": true, "rows": true, "columns": true }
+    },
+
+    { "type": "heading", "text": "Compensation & Benefits", "level": 2 },
+    { "type": "paragraph", "text": "Total compensation spend in Q4 was **$287.4M**, representing 68.3% of operating expenses. The compensation restructuring completed in November resulted in 2,340 employees receiving market adjustments averaging 6.8%." },
+
+    { "type": "two-column",
+      "left": "Average Base Salary: $128,400\nMedian Base Salary: $112,000\nAvg Total Comp (incl. equity): $168,500\n90th Percentile: $245,000\nAvg Salary Increase (Q4): +6.8%",
+      "right": "Benefits Enrollment: 98.7%\nHealth Plan Utilization: 74.2%\n401(k) Participation: 91.3%\nAvg Employer Match: $8,400/yr\nStock Option Grants (Q4): 1,240 employees"
+    },
+
+    { "type": "heading", "text": "Learning & Development", "level": 2 },
+    { "type": "paragraph", "text": "The L&D team delivered **342 training sessions** in Q4, with an average satisfaction rating of 4.5/5.0. Key programs included:" },
+
+    { "type": "numbered-list", "items": "AI & Machine Learning Fundamentals — 1,240 completions (mandatory for all engineering)\nLeadership Accelerator Program — Cohort 4 graduated 28 emerging leaders\nCustomer Empathy Workshop — rolled out to all customer-facing teams (2,770 participants)\nData Privacy & Security Certification — 97% compliance rate achieved\nDEI Inclusive Leadership — completed by 100% of people managers" },
+
+    { "type": "stat-row", "items": [
+      { "label": "Training Hours", "value": "48,200" },
+      { "label": "Sessions Delivered", "value": "342" },
+      { "label": "Avg Satisfaction", "value": "4.5 / 5.0" },
+      { "label": "L&D Spend", "value": "$2.1M" }
+    ]},
+
+    { "type": "heading", "text": "Strategic Initiatives — Q1 2026", "level": 2 },
+    { "type": "paragraph", "text": "Based on Q4 data and emerging workforce trends, the People team recommends the following priorities for Q1 2026:" },
+
+    { "type": "numbered-list", "items": "Expand Returnship Program to 8 partner organizations (projected 80+ hires)\nLaunch AI-powered internal mobility platform — matching employees to open roles based on skills\nPilot 4-day work week in two departments (Engineering-Platform and Design) with rigorous measurement\nImplement pay transparency framework ahead of EU Pay Transparency Directive compliance deadline\nEstablish Workforce Planning Center of Excellence with predictive attrition modeling" },
+
+    { "type": "quote", "text": "The convergence of historically low attrition, record engagement scores, and our expanding global footprint positions Nextera for aggressive growth in 2026. Our people strategy is not just keeping pace — it's a competitive advantage.", "attribution": "Chief People Officer" },
+
+    { "type": "divider" },
+
+    { "type": "heading", "text": "Appendix: Methodology", "level": 2 },
+    { "type": "paragraph", "text": "This report aggregates data from Workday HCM, Culture Amp engagement platform, Greenhouse ATS, and internal compensation analytics. All headcount figures are as of December 31, 2025. Attrition rates are annualized based on trailing 12-month voluntary separations. Compensation data excludes contractors and temporary workers. DEI demographic data is self-reported with a 94.8% disclosure rate." },
+
+    { "type": "spacer", "height": 10 },
+    { "type": "two-column",
+      "left": "Report Contact:\nPeople Analytics Team\nanalytics@nextera.global\n+1 (415) 555-0142",
+      "right": "Next Report: Q1 2026\nPublication Date: April 15, 2026\nDistribution: Executive Team, Board\nRetention Period: 7 years"
+    }
+  ]
+}

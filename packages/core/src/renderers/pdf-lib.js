@@ -35,7 +35,16 @@ export async function renderToPDF(result, opts = {}) {
   // pdf-lib must be passed in since we don't bundle it
   const { PDFDocument, StandardFonts, rgb } = opts.pdfLib || await import('pdf-lib')
 
-  const { pages, pageSize, watermark, metadata = {}, outline = [] } = result
+  const { pages, pageSize, metadata = {}, outline = [] } = result
+  let watermark = result.watermark
+
+  // Ensure watermark color is [r,g,b] array, not hex string
+  if (watermark && watermark.color && typeof watermark.color === 'string') {
+    const hex = watermark.color
+    const n = parseInt(hex.slice(1), 16)
+    watermark = { ...watermark, color: [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255] }
+  }
+
   const pdfDoc = await PDFDocument.create()
 
   // ── Metadata ──

@@ -53,25 +53,10 @@ fastify.get('/', async () => ({
   },
 }))
 
-// ── Public routes (no auth) ──
-fastify.post('/v1/signup', async (request, reply) => {
-  // Delegate to keys route
-  const { default: handler } = await import('./routes/keys.js')
-})
-
 // ── Webhooks (no auth, verified by signature) ──
 await fastify.register(webhooksRoute)
 
-// ── Authenticated routes ──
-fastify.register(async (authedApp) => {
-  // Auth middleware for all routes in this scope
-  authedApp.addHook('preHandler', authMiddleware)
-
-  await authedApp.register(renderRoute)
-  await authedApp.register(keysRoute)
-})
-
-// ── Signup route (outside auth scope) ──
+// ── Public routes (no auth) ──
 fastify.register(async (publicApp) => {
   const { createApiKey } = await import('./db/db.js')
 
@@ -89,6 +74,13 @@ fastify.register(async (publicApp) => {
       message: 'Your API key is ready. Include it as: Authorization: Bearer ' + key.id,
     })
   })
+})
+
+// ── Authenticated routes ──
+fastify.register(async (authedApp) => {
+  authedApp.addHook('preHandler', authMiddleware)
+  await authedApp.register(renderRoute)
+  await authedApp.register(keysRoute)
 })
 
 // ── Start ──
