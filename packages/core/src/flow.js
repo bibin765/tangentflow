@@ -25,9 +25,14 @@ export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
 
   // ─── Footnote tracking ──
   const footnotes = [] // { marker, text, page }
+  const footnoteReserved = {} // pageIndex → reserved height at bottom
+
+  function getFootnoteReserved() {
+    return footnoteReserved[curPage] || 0
+  }
 
   function remainingOnPage() {
-    return contentH - curY
+    return contentH - curY - getFootnoteReserved()
   }
 
   function newPage() {
@@ -38,7 +43,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
   }
 
   function ensureSpace(needed) {
-    if (curY + needed > contentH) {
+    if (curY + needed > contentH - getFootnoteReserved()) {
       newPage()
     }
   }
@@ -936,10 +941,17 @@ export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
   // ─── Footnote collection ────────────────────────────────
   function addFootnote(marker, text) {
     footnotes.push({ marker: String(marker), text, page: curPage })
+
+    // Reserve space at bottom of current page for this footnote
+    const fnFontSize = 8
+    const fnLH = fnFontSize * 1.4
+    const isFirstOnPage = !footnoteReserved[curPage]
+    const separatorH = isFirstOnPage ? 12 : 0 // separator line + padding only once per page
+    footnoteReserved[curPage] = (footnoteReserved[curPage] || 0) + fnLH + separatorH
   }
 
   function renderFootnotes() {
-    // Group footnotes by page, render at bottom of each page
+    // Group footnotes by page, render at bottom of content area
     const byPage = {}
     for (const fn of footnotes) {
       if (!byPage[fn.page]) byPage[fn.page] = []
@@ -951,13 +963,18 @@ export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
       if (!cmds) continue
       const fontSize = 8
       const lh = fontSize * 1.4
-      let footY = margin + footerH + 20
 
-      // Separator line
-      cmds.push({ type: 'line', x1: margin, y1: footY + fns.length * lh + 4, x2: margin + contentW * 0.3, y2: footY + fns.length * lh + 4, color: c.divider })
+      // Position footnotes at the bottom of the content area (above footer)
+      const contentBottom = margin + footerH // bottom of content area in PDF Y
+      const reserved = footnoteReserved[pi] || (fns.length * lh + 12)
 
+      // Separator line at top of footnote area
+      const sepY = contentBottom + reserved
+      cmds.push({ type: 'line', x1: margin, y1: sepY, x2: margin + contentW * 0.3, y2: sepY, color: c.divider })
+
+      // Render footnotes bottom-up from separator
       fns.forEach((fn, i) => {
-        const y = footY + (fns.length - 1 - i) * lh
+        const y = sepY - 8 - (i + 1) * lh + lh
         cmds.push({ type: 'text', text: `${fn.marker}. ${fn.text}`, x: margin, y, fontSize, fontKey: 'regular', color: c.muted })
       })
     }
