@@ -1,8 +1,10 @@
 name: Publish to npm
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: [main]
+    paths:
+      - 'packages/core/**'
 
 jobs:
   publish:
@@ -26,8 +28,29 @@ jobs:
         working-directory: packages/core
         run: npm test
 
+      - name: Check if version changed
+        id: version-check
+        working-directory: packages/core
+        run: |
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(npm view @upbrew/tangentflow version 2>/dev/null || echo "0.0.0")
+          echo "local=$LOCAL_VERSION" >> $GITHUB_OUTPUT
+          echo "published=$PUBLISHED_VERSION" >> $GITHUB_OUTPUT
+          if [ "$LOCAL_VERSION" != "$PUBLISHED_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed: $PUBLISHED_VERSION → $LOCAL_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged: $LOCAL_VERSION"
+          fi
+
       - name: Publish with provenance
+        if: steps.version-check.outputs.changed == 'true'
         working-directory: packages/core
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Skip publish
+        if: steps.version-check.outputs.changed != 'true'
+        run: echo "Version ${{ steps.version-check.outputs.local }} already published, skipping"
