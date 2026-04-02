@@ -1,0 +1,141 @@
+{
+  "page": { "size": "a4", "orientation": "portrait", "margin": 50 },
+  "colors": {
+    "heading": "#1a1a2e",
+    "body": "#2d3436",
+    "accent": "#0984e3",
+    "tableHeader": "#1a1a2e",
+    "tableStripe": "#f8f9fa",
+    "divider": "#dfe6e9",
+    "quoteBar": "#0984e3",
+    "statBg": "#f0f3f8",
+    "muted": "#636e72"
+  },
+  "metadata": {
+    "title": "Invoice INV-2026-0847",
+    "author": "Nextera Global Holdings",
+    "subject": "Professional services invoice for Q1 2026 engagement"
+  },
+  "headerFooter": {
+    "headerLeft": "Nextera Global Holdings",
+    "headerRight": "Invoice",
+    "footerLeft": "Thank you for your business",
+    "footerRightMode": "page-number"
+  },
+  "blocks": [
+    { "type": "spacer", "height": 10 },
+
+    { "type": "two-column",
+      "left": "NEXTERA GLOBAL HOLDINGS\n548 Market Street, Suite 1200\nSan Francisco, CA 94104\nUnited States\n\nTax ID: US-82-4729183\nVAT: EU372849156",
+      "right": "Phone: +1 (415) 555-0142\nEmail: billing@nextera.global\nWeb: www.nextera.global\n\nDUNS: 08-421-7893\nSWIFT: NEXAUS33"
+    },
+
+    { "type": "spacer", "height": 12 },
+    { "type": "divider" },
+    { "type": "spacer", "height": 12 },
+
+    { "type": "stat-row", "items": [
+      { "label": "Invoice Number", "value": "INV-2026-0847" },
+      { "label": "Invoice Date", "value": "April 1, 2026" },
+      { "label": "Due Date", "value": "May 1, 2026" },
+      { "label": "Currency", "value": "USD" }
+    ]},
+
+    { "type": "spacer", "height": 12 },
+
+    { "type": "heading", "text": "Bill To", "level": 2 },
+    { "type": "key-value", "items": "Company: Meridian Technologies Inc.\nAttn: Accounts Payable Department\nAddress: 2100 Innovation Boulevard, Austin, TX 78701, United States\nEmail: ap@meridian.tech\nPO Number: PO-MT-2026-3841\nProject: Enterprise Platform Migration — Phase 2" },
+
+    { "type": "spacer", "height": 12 },
+    { "type": "heading", "text": "Services Rendered", "level": 2 },
+
+    { "type": "table",
+      "headers": "Item, Description, Qty, Unit, Rate, Amount",
+      "rows": "1, Enterprise Architecture Consulting — System design and technical architecture for cloud migration including multi-region deployment strategy and disaster recovery planning, 120, hrs, $285.00, $34200.00\n2, Senior Software Engineering — Full-stack development of customer portal and API gateway with OAuth 2.0 integration and role-based access control, 240, hrs, $225.00, $54000.00\n3, DevOps & Infrastructure — Kubernetes cluster setup and CI/CD pipeline configuration across 3 environments (dev/staging/prod) with automated rollback, 80, hrs, $245.00, $19600.00\n4, Data Migration Services — ETL pipeline development for migrating 14.2M records from legacy Oracle DB to PostgreSQL with validation and reconciliation, 60, hrs, $265.00, $15900.00\n5, Quality Assurance — Comprehensive test suite development including unit tests (1847 cases) and integration tests (342 scenarios) and performance benchmarks, 90, hrs, $195.00, $17550.00\n6, Project Management — Agile program management with bi-weekly stakeholder demos and risk mitigation planning and vendor coordination, 45, hrs, $275.00, $12375.00\n7, Security Audit & Compliance — SOC 2 Type II readiness assessment and penetration testing and vulnerability remediation across all public-facing endpoints, 1, fixed, $18500.00, $18500.00\n8, Training & Knowledge Transfer — 5-day on-site workshop for Meridian engineering team covering system architecture and operational runbooks and incident procedures, 1, fixed, $12500.00, $12500.00",
+      "colWidths": [30, "auto", 30, 30, 65, 70],
+      "align": ["center", "left", "center", "center", "right", "right"],
+      "borders": { "outer": true, "header": true, "rows": true, "columns": true, "width": 0.5 }
+    },
+
+    { "type": "spacer", "height": 8 },
+    { "type": "divider" },
+    { "type": "spacer", "height": 4 },
+
+    { "type": "key-value", "items": "Subtotal: $184,625.00\nDiscount (5% — Volume Engagement): -$9,231.25\nNet Amount: $175,393.75\nTax (0% — Reverse Charge B2B): $0.00" },
+
+    { "type": "spacer", "height": 6 },
+    { "type": "stat-row", "items": [
+      { "label": "Total Due (USD)", "value": "$175,393.75" }
+    ]},
+    { "type": "spacer", "height": 10 },
+
+    { "type": "heading", "text": "Payment Instructions", "level": 2 },
+
+    { "type": "two-column",
+      "left": "Wire Transfer (Preferred)\nBank: Silicon Valley Bank\nAccount Name: Nextera Global Holdings Inc.\nAccount Number: 3301-8847-2910\nRouting (ABA): 121140399\nSWIFT: SVBKUS6S\nReference: INV-2026-0847",
+      "right": "ACH Transfer\nBank: Silicon Valley Bank\nAccount Number: 3301-8847-2910\nRouting: 121140399\nReference: INV-2026-0847\n\nFor international transfers, use SWIFT code above.\nIntermediary bank not required for USD transfers."
+    },
+
+    { "type": "spacer", "height": 10 },
+
+    { "type": "heading", "text": "Terms & Conditions", "level": 2 },
+    { "type": "paragraph", "text": "**Payment Terms:** Net 30 days from invoice date. A late payment fee of 1.5% per month (18% APR) will be applied to balances outstanding beyond the due date." },
+    { "type": "paragraph", "text": "**Dispute Resolution:** Any billing disputes must be reported in writing within 15 business days of invoice receipt. Undisputed portions remain due per original terms." },
+    { "type": "paragraph", "text": "**Governing Law:** This invoice and all services rendered are governed by the laws of the State of California, United States. Any disputes shall be resolved in the courts of San Francisco County." },
+
+    { "type": "spacer", "height": 6 },
+
+    { "type": "quote", "text": "This invoice is generated electronically and is valid without signature. For questions regarding this invoice, contact billing@nextera.global or call +1 (415) 555-0142 ext. 3.", "attribution": "" },
+
+    { "type": "spacer", "height": 10 },
+    { "type": "divider" },
+    { "type": "spacer", "height": 6 },
+
+    { "type": "heading", "text": "Project Summary", "level": 2 },
+    { "type": "paragraph", "text": "This invoice covers Phase 2 of the Enterprise Platform Migration engagement (SOW-MT-2026-002), executed between January 15 and March 31, 2026. Key deliverables completed:" },
+
+    { "type": "numbered-list", "items": "Cloud-native architecture deployed across AWS us-east-1 and eu-west-1 regions with 99.97% uptime SLA\nCustomer portal launched with 12,400 active users in first 2 weeks — zero critical bugs reported\nData migration completed — 14.2M records migrated with 99.998% accuracy (3 records required manual review)\nCI/CD pipeline delivering 47 deployments in March with average deploy time of 4.2 minutes\nSOC 2 Type II audit evidence package prepared — formal audit scheduled for April 2026\nFull knowledge transfer completed — Meridian team independently deployed 8 releases in final week" },
+
+    { "type": "spacer", "height": 8 },
+
+    { "type": "stat-row", "items": [
+      { "label": "Total Hours", "value": "635" },
+      { "label": "Team Members", "value": "12" },
+      { "label": "Deployments", "value": "142" },
+      { "label": "Uptime", "value": "99.97%" },
+      { "label": "On Budget", "value": "97.3%" }
+    ]},
+
+    { "type": "spacer", "height": 10 },
+    { "type": "divider" },
+    { "type": "spacer", "height": 6 },
+
+    { "type": "heading", "text": "Time & Materials Breakdown", "level": 2 },
+    { "type": "table",
+      "headers": "Team Member, Role, Hours, Billable Rate, Total",
+      "rows": "Sarah Chen, Principal Architect, 120, $285.00, $34200.00\nMarcus Rivera, Senior Engineer (Backend), 110, $225.00, $24750.00\nPriya Sharma, Senior Engineer (Frontend), 95, $225.00, $21375.00\nAlex Morgan, Senior Engineer (Full-stack), 35, $225.00, $7875.00\nTom Nakamura, DevOps Lead, 80, $245.00, $19600.00\nLisa Park, Data Engineer, 60, $265.00, $15900.00\nJordan Kim, QA Lead, 50, $195.00, $9750.00\nAna Silva, QA Engineer, 40, $195.00, $7800.00\nDavid Okonkwo, Project Manager, 45, $275.00, $12375.00",
+      "colWidths": ["auto", "auto", 45, 70, 70],
+      "align": ["left", "left", "center", "right", "right"],
+      "borders": { "outer": true, "header": true, "rows": true, "columns": true }
+    },
+
+    { "type": "spacer", "height": 6 },
+
+    { "type": "heading", "text": "Hours by Month", "level": 3 },
+    { "type": "table",
+      "headers": "Month, Architecture, Engineering, DevOps, Data, QA, PM, Total",
+      "rows": "January 2026, 45, 65, 30, 20, 15, 15, 190\nFebruary 2026, 40, 80, 30, 25, 35, 15, 225\nMarch 2026, 35, 95, 20, 15, 40, 15, 220",
+      "align": ["left", "right", "right", "right", "right", "right", "right", "right"],
+      "borders": { "outer": true, "header": true, "rows": true, "columns": true }
+    },
+
+    { "type": "spacer", "height": 12 },
+    { "type": "divider" },
+    { "type": "spacer", "height": 6 },
+
+    { "type": "two-column",
+      "left": "Approved By:\n\n\n______________________________\nDavid Okonkwo\nEngagement Director\nNextera Global Holdings",
+      "right": "Accepted By:\n\n\n______________________________\nName: ________________________\nTitle: ________________________\nMeridian Technologies Inc."
+    }
+  ]
+}

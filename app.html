@@ -239,6 +239,47 @@
     .block-icon.stat-row { background: #8a6d4518; color: #8a6d45; }
     .block-icon.footnote { background: #4a829018; color: #4a8290; }
     .block-icon.toc { background: #5c7a6418; color: var(--color-accent); }
+
+    /* ── JSON export modal ───────────────────────────────── */
+    .json-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.15s ease;
+    }
+    .json-modal {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 16px 64px rgba(0, 0, 0, 0.15);
+      width: 90vw;
+      max-width: 700px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .json-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .json-modal-header h3 { font-size: 15px; font-weight: 600; }
+    .json-modal-body { flex: 1; overflow: auto; padding: 16px 20px; background: var(--color-bg); }
+    .json-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid var(--color-border-light);
+    }
+    .json-modal-footer .modal-info { font-size: 12px; color: var(--color-text-muted); }
     .block-icon.spacer { background: #9b959018; color: var(--color-text-muted); }
     .block-icon.divider { background: #9b959018; color: var(--color-text-muted); }
     .block-icon.page-break { background: #c4473a15; color: #c4473a; }
@@ -953,8 +994,29 @@
       <button class="btn-generate" id="btn-preview">Preview</button>
       <button class="btn-secondary" id="btn-download">Download PDF</button>
     </div>
+    <div class="btn-row" style="margin-top:6px;">
+      <button class="btn-secondary" id="btn-export-json" style="font-size:12px;">Export JSON Schema</button>
+      <button class="btn-secondary" id="btn-export-curl" style="font-size:12px;">Copy cURL Command</button>
+    </div>
 
     <div class="stats" id="stats"></div>
+
+    <!-- JSON Export Modal -->
+    <div class="json-modal-overlay" id="json-modal" style="display:none;">
+      <div class="json-modal">
+        <div class="json-modal-header">
+          <h3 id="json-modal-title">JSON Schema</h3>
+          <button class="modal-close" id="json-modal-close">&times;</button>
+        </div>
+        <div class="json-modal-body">
+          <pre id="json-modal-content" style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.5;font-family:var(--font-mono);color:var(--color-text);max-height:60vh;overflow-y:auto;"></pre>
+        </div>
+        <div class="json-modal-footer">
+          <span class="modal-info" id="json-modal-info"></span>
+          <button class="btn-generate" id="json-modal-copy" style="width:auto;padding:8px 20px;font-size:13px;">Copy to Clipboard</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="preview">

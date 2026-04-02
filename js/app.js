@@ -147,6 +147,106 @@ $('btn-download').addEventListener('click', async () => {
   await renderPDF(flow.pages, pageSize, wm, meta)
 })
 
+// ─── Export JSON / cURL ──────────────────────────────────────────────
+function buildSchema() {
+  const pageSize = $('page-size').value
+  const orientation = $('page-orientation').value
+  const margin = parseInt($('page-margin').value)
+  const wm = getWatermark()
+  const meta = getMetadata()
+
+  // Convert color arrays back to hex for readability
+  function toHex(rgb) {
+    if (!rgb || !Array.isArray(rgb)) return undefined
+    return '#' + rgb.map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')
+  }
+
+  const colors = getStyleColors()
+  const colorHex = {}
+  for (const [k, v] of Object.entries(colors)) {
+    colorHex[k] = toHex(v)
+  }
+
+  // Clean blocks — remove internal properties (_img, _naturalW, etc.)
+  const cleanBlocks = blocks.map(b => {
+    const clean = { ...b }
+    delete clean._img
+    delete clean._naturalW
+    delete clean._naturalH
+    // Convert stat-row items if they are objects
+    if (clean.type === 'stat-row' && Array.isArray(clean.items)) {
+      clean.items = clean.items.map(i => typeof i === 'object' ? i : i)
+    }
+    return clean
+  })
+
+  const schema = { page: { size: pageSize, orientation, margin } }
+
+  // Only include non-default values
+  if (Object.values(colorHex).some(v => v)) schema.colors = colorHex
+  if (meta.title || meta.author || meta.subject) schema.metadata = meta
+  if (wm) schema.watermark = { text: wm.text, color: toHex(wm.color), opacity: wm.opacity }
+
+  // Header/footer
+  if (headerFooter.headerLeft || headerFooter.headerRight || headerFooter.footerLeft || headerFooter.logoSrc) {
+    schema.headerFooter = {}
+    if (headerFooter.headerLeft) schema.headerFooter.headerLeft = headerFooter.headerLeft
+    if (headerFooter.headerRight) schema.headerFooter.headerRight = headerFooter.headerRight
+    if (headerFooter.footerLeft) schema.headerFooter.footerLeft = headerFooter.footerLeft
+    if (headerFooter.footerRightMode !== 'page-number') schema.headerFooter.footerRightMode = headerFooter.footerRightMode
+    if (headerFooter.footerCustom) schema.headerFooter.footerCustom = headerFooter.footerCustom
+    // Skip logo src (data URL is too large for JSON export)
+    if (headerFooter.logoSrc) schema.headerFooter._note = 'Logo image excluded — re-upload via API'
+  }
+
+  schema.blocks = cleanBlocks
+  return schema
+}
+
+function showJsonModal(title, content, info) {
+  $('json-modal-title').textContent = title
+  $('json-modal-content').textContent = content
+  $('json-modal-info').textContent = info
+  $('json-modal').style.display = 'flex'
+}
+
+$('btn-export-json').addEventListener('click', () => {
+  const schema = buildSchema()
+  const json = JSON.stringify(schema, null, 2)
+  showJsonModal('JSON Schema', json, `${blocks.length} blocks \u2022 ${json.length} chars \u2022 Paste into POST /v1/render`)
+})
+
+$('btn-export-curl').addEventListener('click', () => {
+  const schema = buildSchema()
+  const json = JSON.stringify(schema)
+  const curl = `curl -X POST https://api.tangentflow.com/v1/render \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '${json.replace(/'/g, "'\\''")}' \\\n  -o document.pdf`
+  showJsonModal('cURL Command', curl, 'Replace YOUR_API_KEY with your key from POST /v1/signup')
+})
+
+$('json-modal-close').addEventListener('click', () => {
+  $('json-modal').style.display = 'none'
+})
+
+$('json-modal').addEventListener('click', (e) => {
+  if (e.target === $('json-modal')) $('json-modal').style.display = 'none'
+})
+
+$('json-modal-copy').addEventListener('click', () => {
+  const content = $('json-modal-content').textContent
+  navigator.clipboard.writeText(content).then(() => {
+    const btn = $('json-modal-copy')
+    const orig = btn.textContent
+    btn.textContent = 'Copied!'
+    setTimeout(() => { btn.textContent = orig }, 1500)
+  })
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('json-modal').style.display === 'flex') {
+    $('json-modal').style.display = 'none'
+  }
+})
+
 // Page settings
 $('page-size').addEventListener('change', generatePreview)
 $('page-orientation').addEventListener('change', generatePreview)
