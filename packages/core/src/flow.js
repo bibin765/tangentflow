@@ -158,8 +158,13 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     const weight = fontKey === 'bold' ? 'bold ' : fontKey === 'italic' ? 'italic ' : ''
     const fontStr = `${weight}${fontSize}px Helvetica`
     const prep = prepareWithSegments(text, fontStr)
-    const result = layoutWithLines(prep, 99999, fontSize * 1.4)
-    return result.lines[0]?.width || 0
+    // Sum segment widths directly to include trailing whitespace
+    // (layoutWithLines trims trailing whitespace from reported line width)
+    let totalWidth = 0
+    for (const w of prep.widths) {
+      totalWidth += w
+    }
+    return totalWidth
   }
 
   function addRichText(text, fontSize, color, lineHeightMult, indent) {
