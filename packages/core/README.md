@@ -2,7 +2,7 @@
 
 PDF document generation with pixel-perfect text wrapping. Powered by [Pretext](https://github.com/chenglou/pretext).
 
-**[Live Demo](https://tangentflow.com/app)** | **[Documentation](https://tangentflow.com/docs)** | **[GitHub](https://github.com/bibin765/tangentflow)**
+**[Live Demo](https://tangentflow.com/app)** | **[Documentation](https://tangentflow.com/docs)** | **[GitHub](https://github.com/bibin765/tangentflow)** | **[Changelog](./CHANGELOG.md)**
 
 TangentFlow is the missing layout layer for PDF generation in JavaScript. It solves the hardest problem — **accurate text measurement and line-breaking** — so your documents look exactly right, in every language, without a headless browser.
 
@@ -171,6 +171,11 @@ const doc = createDocument({
 ```
 
 All options are optional. Defaults: A4 portrait, 60pt margins, dark color scheme.
+
+### Color Format
+
+Colors in document options accept hex strings (`'#1a1820'`) or `[r, g, b]` arrays (0-1 range).
+Draw commands always emit `[r, g, b]` arrays. Your renderer must handle this format.
 
 ### Page Sizes
 
@@ -443,7 +448,7 @@ When `wrap` is `'left'` or `'right'`, the image floats to one side and subsequen
 
 **Note:** In the browser, pass an `Image` object as `_img` and natural dimensions as `_naturalW`/`_naturalH`. In Node.js, image rendering in the draw commands requires a renderer that handles the `image` command type.
 
-### `doc.tableOfContents()` (v0.3.0)
+### `doc.tableOfContents(options?)` (v0.3.0)
 
 Generate a table of contents automatically from all headings in the document. The TOC lists each heading with its page number, indented by level.
 
@@ -458,6 +463,21 @@ doc.paragraph('Expenses decreased 5%...')
 ```
 
 The TOC is generated during `build()`, so headings added after `tableOfContents()` are included. Page numbers are calculated from the final paginated layout.
+
+**Options:**
+
+```js
+doc.tableOfContents()                                    // default: adds "Table of Contents" H1
+doc.tableOfContents({ heading: false })                  // no auto-heading
+doc.tableOfContents({ heading: 'Contents', level: 2 })   // custom heading
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `heading` | `string \| false` | `'Table of Contents'` | The heading text to insert before the TOC. Set to `false` to suppress the auto-heading entirely. |
+| `level` | `1 \| 2 \| 3` | `1` | Heading level when `heading` is a string. |
+
+**Note:** `tableOfContents()` auto-inserts an H1 heading by default. If you want to provide your own heading or use the TOC without one, pass `{ heading: false }`.
 
 ### `doc.multiColumn(text, options?)` (v0.3.0)
 
@@ -613,6 +633,74 @@ To convert for canvas rendering (where Y goes down), use:
 canvasY = pageHeight - pdfY - elementHeight
 ```
 
+### Draw Command Reference
+
+Each draw command is a plain object with a `type` field. Below is the full field reference for every command type.
+
+#### `text`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | `'text'` | Command type identifier |
+| `text` | `string` | The text content to draw |
+| `x` | `number` | X coordinate in PDF points |
+| `y` | `number` | Y coordinate in PDF points (baseline position, Y-up) |
+| `fontSize` | `number` | Font size in points |
+| `fontKey` | `'regular' \| 'bold' \| 'italic'` | Which font variant to use |
+| `color` | `[number, number, number]` | RGB color array, each value 0-1 |
+| `align` | `'left' \| 'center' \| 'right'` | Text alignment (default: `'left'`) |
+
+**Alignment and coordinates:** When `align` is `'left'` (default), `x` is the left edge of the text. When `align` is `'center'`, `x` is the **center point** of the text -- the renderer must offset by half the measured text width to the left. When `align` is `'right'`, `x` is the **right edge** of the text -- the renderer must offset by the full measured text width to the left. The official pdf-lib renderer handles this automatically.
+
+#### `rect`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | `'rect'` | Command type identifier |
+| `x` | `number` | X coordinate of the bottom-left corner |
+| `y` | `number` | Y coordinate of the bottom-left corner |
+| `w` | `number` | Width in points |
+| `h` | `number` | Height in points |
+| `color` | `[number, number, number]` | RGB fill color array, each value 0-1 |
+| `radius` | `number` | Optional corner radius for rounded rectangles |
+
+#### `line`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | `'line'` | Command type identifier |
+| `x1` | `number` | Start X coordinate |
+| `y1` | `number` | Start Y coordinate |
+| `x2` | `number` | End X coordinate |
+| `y2` | `number` | End Y coordinate |
+| `color` | `[number, number, number]` | RGB stroke color array, each value 0-1 |
+| `lineWidth` | `number` | Line thickness in points (default: `0.5`) |
+
+#### `image`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | `'image'` | Command type identifier |
+| `img` | `Image \| null` | The Image object (browser). May be `null` in Node.js. |
+| `src` | `string` | Data URL of the image (use this for embedding in pdf-lib) |
+| `x` | `number` | X coordinate of the bottom-left corner |
+| `y` | `number` | Y coordinate of the bottom-left corner |
+| `w` | `number` | Display width in points |
+| `h` | `number` | Display height in points |
+
+#### `link`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | `'link'` | Command type identifier |
+| `x` | `number` | X coordinate of the link area |
+| `y` | `number` | Y coordinate of the link area |
+| `w` | `number` | Width of the clickable area |
+| `h` | `number` | Height of the clickable area |
+| `url` | `string` | Target URL |
+
+**Note on colors:** All colors in draw commands are `[r, g, b]` arrays with values in the 0-1 range, even though the document configuration accepts hex strings. Your renderer must handle this format (e.g., `rgb(cmd.color[0], cmd.color[1], cmd.color[2])` in pdf-lib).
+
 ---
 
 ## `renderFromSchema(schema)`
@@ -713,7 +801,29 @@ const pages = flow.pages // array of draw command arrays
 
 TangentFlow produces draw commands — it doesn't generate PDFs directly. You feed the commands to a renderer. Here are examples:
 
-### With pdf-lib (browser or Node.js)
+### Official pdf-lib Renderer
+
+TangentFlow ships an official pdf-lib renderer that handles all draw command types:
+
+```js
+import { createDocument } from '@upbrew/tangentflow'
+import { renderToPDF } from '@upbrew/tangentflow/renderers/pdf-lib'
+import * as pdfLib from 'pdf-lib'
+
+const doc = createDocument({ page: { size: 'a4' }, metadata: { title: 'Report' } })
+doc.heading('Hello World')
+doc.paragraph('Generated with **TangentFlow**.')
+
+const result = doc.build()
+const pdfBytes = await renderToPDF(result, { pdfLib })
+// pdfBytes is a Uint8Array — write to file, send to client, etc.
+```
+
+The renderer handles: text alignment (center/right), bold/italic fonts, image embedding from data URLs, watermarks, non-Latin text fallback (canvas-rendered PNG), and inline text grouping for accurate positioning.
+
+### With pdf-lib (manual / custom renderer)
+
+If you need full control, you can write your own renderer loop. Here is a minimal example:
 
 ```js
 import { createDocument } from '@upbrew/tangentflow'
@@ -838,6 +948,18 @@ TangentFlow uses three Pretext functions:
 | Runs in browser | Yes | Yes | Yes | No (server) |
 | Bundle size | ~10KB + Pretext | ~2MB | ~300KB | ~150MB |
 | Speed | ~2ms | ~5ms | ~3ms | ~2-5 seconds |
+
+---
+
+## Known Issues & Limitations
+
+- **Inline bold/italic positioning drift in pdf-lib** — Inline bold or italic text within a paragraph may have slight positioning drift when rendered with pdf-lib, because canvas-based font metrics (used by Pretext for measurement) do not perfectly match pdf-lib's embedded font metrics. Use the `measureTextWidth` callback or the official renderer's inline grouping logic to correct this.
+
+- **Multi-column text does not support inline formatting** — Text passed to `doc.multiColumn()` is rendered as plain text. Inline formatting syntax (`**bold**`, `*italic*`, `{#ff0000|color}`, etc.) is not parsed within multi-column blocks.
+
+- **`tableOfContents()` auto-inserts an H1 heading** — By default, calling `doc.tableOfContents()` adds a "Table of Contents" H1 heading before the TOC entries. Use `{ heading: false }` to suppress this if you want to provide your own heading or omit it entirely.
+
+- **Footnotes on content-heavy pages** — Footnotes on pages with a large amount of body content may not have enough space at the bottom of the page. In these cases, use `doc.pageBreak()` before the footnote-heavy section to ensure adequate space for footnote rendering.
 
 ---
 

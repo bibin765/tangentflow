@@ -240,9 +240,12 @@ export function createDocument(options = {}) {
 
     /**
      * Add a table of contents (auto-generated from headings)
+     * @param {Object} [opts]
+     * @param {boolean|string} [opts.heading=true] - false to suppress auto-heading, or a custom heading string
+     * @param {number} [opts.level=1] - heading level (1-3) when auto-heading is enabled
      */
-    tableOfContents() {
-      blocks.push({ type: 'toc' })
+    tableOfContents(opts) {
+      blocks.push({ type: 'toc', ...opts })
       return builder
     },
 

@@ -76,7 +76,7 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
         break
       }
       case 'toc': {
-        flow.addTOC()
+        flow.addTOC(block)
         break
       }
       case 'footnote': {

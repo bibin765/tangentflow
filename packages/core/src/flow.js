@@ -804,17 +804,22 @@ export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
   }
 
   // ─── TOC (table of contents) ────────────────────────────
-  function addTOC() {
-    // Render a "Table of Contents" heading
-    addHeading('Table of Contents', 1, 22, c.heading)
-    addSpacer(8)
+  function addTOC(tocOpts) {
+    const opts = tocOpts || {}
+    // Auto-heading unless heading: false
+    if (opts.heading !== false) {
+      const headingText = typeof opts.heading === 'string' ? opts.heading : 'Table of Contents'
+      const headingLevel = opts.level || 1
+      const sizes = { 1: 22, 2: 16, 3: 13 }
+      addHeading(headingText, headingLevel, sizes[headingLevel] || 16, c.heading)
+      addSpacer(8)
+    }
 
     // Store insertion point — entries will be rendered by renderTOC() after all blocks
     const tocPage = curPage
     const tocY = curY
     addDrawCmd({ type: '_toc_marker', page: tocPage, y: tocY })
-    // Reserve space (will be filled by renderTOC)
-    curY += 200 // rough estimate, adjusted in renderTOC
+    curY += 200 // rough estimate, filled by renderTOC
   }
 
   function renderTOC() {
