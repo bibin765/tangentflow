@@ -194,6 +194,54 @@ export function buildInlineEditor(block, index, container, callbacks) {
       buildTableEditor(container, block, callbacks)
       break
 
+    case 'multi-column':
+      container.innerHTML = `
+        <div class="inline-field"><label>Content</label><textarea rows="4" data-field="text">${escHtml(block.text)}</textarea></div>
+        <div class="inline-row">
+          <div class="inline-field">
+            <label>Columns</label>
+            <select data-field="columns">
+              <option value="2" ${block.columns === 2 ? 'selected' : ''}>2</option>
+              <option value="3" ${block.columns === 3 ? 'selected' : ''}>3</option>
+              <option value="4" ${block.columns === 4 ? 'selected' : ''}>4</option>
+            </select>
+          </div>
+          <div class="inline-field">
+            <label>Gap (px)</label>
+            <input type="number" value="${block.gap || 16}" min="4" max="40" data-field="gap" />
+          </div>
+        </div>
+      `
+      container.querySelector('[data-field="text"]').addEventListener('input', (e) => { block.text = e.target.value; callbacks.generatePreview() })
+      container.querySelector('[data-field="columns"]').addEventListener('change', (e) => {
+        block.columns = parseInt(e.target.value)
+        container.closest('.block-item').querySelector('.block-preview').textContent = `${block.columns}-column layout`
+        callbacks.generatePreview()
+      })
+      container.querySelector('[data-field="gap"]').addEventListener('input', (e) => { block.gap = parseInt(e.target.value) || 16; callbacks.generatePreview() })
+      break
+
+    case 'footnote':
+      container.innerHTML = `
+        <div class="inline-row">
+          <div class="inline-field" style="flex:none;width:50px;">
+            <label>Marker</label>
+            <input type="text" value="${escAttr(block.marker || '1')}" data-field="marker" />
+          </div>
+          <div class="inline-field">
+            <label>Footnote text</label>
+            <input type="text" value="${escAttr(block.text || '')}" data-field="text" />
+          </div>
+        </div>
+      `
+      container.querySelector('[data-field="marker"]').addEventListener('input', (e) => { block.marker = e.target.value; callbacks.generatePreview() })
+      container.querySelector('[data-field="text"]').addEventListener('input', (e) => { block.text = e.target.value; callbacks.generatePreview() })
+      break
+
+    case 'toc':
+      container.innerHTML = '<p style="font-size:11px;color:var(--color-text-muted);padding:2px 0;">Auto-generated table of contents from headings.</p>'
+      break
+
     case 'page-break':
       container.innerHTML = '<p style="font-size:11px;color:var(--color-text-muted);padding:2px 0;">Forces content after this block onto a new page.</p>'
       break

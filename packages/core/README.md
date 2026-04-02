@@ -6,6 +6,23 @@ PDF document generation with pixel-perfect text wrapping. Powered by [Pretext](h
 
 TangentFlow is the missing layout layer for PDF generation in JavaScript. It solves the hardest problem — **accurate text measurement and line-breaking** — so your documents look exactly right, in every language, without a headless browser.
 
+---
+
+## What's New in v0.3.0
+
+v0.3.0 is a major feature release that brings TangentFlow closer to full document authoring:
+
+- **Table enhancements** — explicit column widths, per-column alignment, and full border customization
+- **Inline color spans** — `{#ff0000|colored text}` syntax for inline colored text
+- **Superscript / Subscript** — `^superscript^` and `~subscript~` markup
+- **Nested lists** — sub-items via nested arrays with distinct bullet characters per level
+- **Table of Contents** — auto-generated from headings with `doc.tableOfContents()`
+- **Outline / Bookmarks** — `build()` now returns an `outline` array for PDF bookmarks
+- **Multi-column text** — `doc.multiColumn()` for newspaper-style column layouts
+- **Footnotes** — `doc.footnote()` renders numbered notes at the page bottom
+- **Image captions** — `caption` option on `doc.image()` for figure labels
+- **Page break control** — `breakBefore: true` option on headings and other blocks
+
 ## Why TangentFlow?
 
 Every PDF library has the same problem: text wrapping is broken.
@@ -188,6 +205,7 @@ doc.heading('Subsection', { level: 3 })      // H3 (13pt)
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `level` | `1 \| 2 \| 3` | `1` | Heading level |
+| `breakBefore` | `boolean` | `false` | Force a page break before this heading (v0.3.0) |
 
 ### `doc.paragraph(text)`
 
@@ -198,6 +216,9 @@ doc.paragraph('Plain text wraps automatically at page margins.')
 doc.paragraph('Text with **bold**, *italic*, and __underlined__ words.')
 doc.paragraph('Visit [our website](https://example.com) for details.')
 doc.paragraph('Line one.\nLine two after a hard break.')
+doc.paragraph('Energy is defined as E=mc^2^ in physics.')
+doc.paragraph('Water is H~2~O.')
+doc.paragraph('This word is {#ff0000|highlighted in red}.')
 ```
 
 **Inline formatting syntax:**
@@ -208,6 +229,9 @@ doc.paragraph('Line one.\nLine two after a hard break.')
 | `*italic*` | *italic* |
 | `__underline__` | underlined text |
 | `[text](url)` | clickable link |
+| `{#ff0000\|colored text}` | colored text (any hex color) |
+| `^superscript^` | superscript (e.g. E=mc^2^) |
+| `~subscript~` | subscript (e.g. H~2~O) |
 
 Formatting can be mixed within a single paragraph. Pretext handles the line-breaking on the combined text, then formatting is applied per character range.
 
@@ -225,15 +249,51 @@ doc.table({
 })
 ```
 
+**With explicit column widths, alignment, and border customization (v0.3.0):**
+
+```js
+doc.table({
+  headers: ['Product', 'Description', 'Price'],
+  rows: [
+    ['Widget Pro', 'A professional-grade widget with advanced features', '$299'],
+    ['Widget Lite', 'Lightweight version for personal use', '$99'],
+  ],
+  colWidths: [100, 'auto', 80],       // fixed or 'auto' per column
+  align: ['left', 'left', 'right'],   // per-column text alignment
+  borders: {
+    outer: true,       // border around the entire table
+    header: true,      // line below the header row
+    rows: true,        // horizontal lines between rows
+    columns: true,     // vertical lines between columns
+    width: 0.5,        // border line width in points
+    color: '#cccccc',  // border color (hex string)
+  },
+})
+```
+
 | Option | Type | Description |
 |--------|------|-------------|
 | `headers` | `string[]` | Column header labels |
 | `rows` | `string[][]` | Array of rows, each row is an array of cell strings |
+| `colWidths` | `(number \| 'auto')[]` | Explicit column widths in points; `'auto'` distributes remaining space (v0.3.0) |
+| `align` | `('left' \| 'right' \| 'center')[]` | Per-column text alignment (v0.3.0) |
+| `borders` | `object` | Border customization (v0.3.0) |
+
+**`borders` options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `outer` | `boolean` | `false` | Draw a border around the entire table |
+| `header` | `boolean` | `true` | Draw a line below the header row |
+| `rows` | `boolean` | `false` | Draw horizontal lines between body rows |
+| `columns` | `boolean` | `false` | Draw vertical lines between columns |
+| `width` | `number` | `0.5` | Line width in points |
+| `color` | `string` | `'#cccccc'` | Line color as hex string |
 
 **How table layout works:**
 
 1. Pretext measures the natural (unwrapped) width of every cell
-2. Column widths are distributed proportionally with a minimum of 40pt
+2. Column widths are distributed proportionally with a minimum of 40pt (unless overridden by `colWidths`)
 3. Each cell's text is wrapped within its column using Pretext
 4. Row height adjusts to fit the tallest wrapped cell
 5. When a table spans multiple pages, headers repeat automatically
@@ -262,6 +322,36 @@ doc.numberedList([
   'Implement and test each component',
 ])
 ```
+
+### Nested Lists (v0.3.0)
+
+Both `bulletList` and `numberedList` support nested sub-items via nested arrays. Each nesting level uses a different bullet character:
+
+- Level 1: **\u2022** (bullet)
+- Level 2: **\u25e6** (open bullet)
+- Level 3: **\u25aa** (small square)
+
+```js
+doc.bulletList([
+  'Top-level item',
+  ['Sub-item one', 'Sub-item two'],
+  'Another top-level item',
+  ['Nested under the second', ['Deeply nested']],
+])
+```
+
+This renders as:
+
+```
+ \u2022  Top-level item
+    \u25e6  Sub-item one
+    \u25e6  Sub-item two
+ \u2022  Another top-level item
+    \u25e6  Nested under the second
+       \u25aa  Deeply nested
+```
+
+Numbered lists nest the same way, with indented sub-lists using bullet characters.
 
 ### `doc.quote(text, attribution?)`
 
@@ -327,6 +417,7 @@ doc.image('data:image/png;base64,...', {
   width: 200,       // width in points
   align: 'center',  // 'left' | 'center' | 'right'
   wrap: 'none',     // 'none' | 'left' | 'right'
+  caption: 'Figure 1: Revenue by quarter',  // v0.3.0
 })
 ```
 
@@ -335,6 +426,7 @@ doc.image('data:image/png;base64,...', {
 | `width` | `number` | `200` | Display width in points |
 | `align` | `string` | `'left'` | Horizontal alignment |
 | `wrap` | `string` | `'none'` | Text wrap mode |
+| `caption` | `string` | — | Caption text rendered below the image (v0.3.0) |
 
 When `wrap` is `'left'` or `'right'`, the image floats to one side and subsequent paragraph text wraps around it using Pretext's `layoutNextLine()` API. This produces magazine-style text flow:
 
@@ -350,6 +442,57 @@ When `wrap` is `'left'` or `'right'`, the image floats to one side and subsequen
 ```
 
 **Note:** In the browser, pass an `Image` object as `_img` and natural dimensions as `_naturalW`/`_naturalH`. In Node.js, image rendering in the draw commands requires a renderer that handles the `image` command type.
+
+### `doc.tableOfContents()` (v0.3.0)
+
+Generate a table of contents automatically from all headings in the document. The TOC lists each heading with its page number, indented by level.
+
+```js
+doc.heading('Annual Report')
+doc.tableOfContents()
+
+doc.heading('Revenue', { level: 2 })
+doc.paragraph('Revenue grew 23%...')
+doc.heading('Expenses', { level: 2 })
+doc.paragraph('Expenses decreased 5%...')
+```
+
+The TOC is generated during `build()`, so headings added after `tableOfContents()` are included. Page numbers are calculated from the final paginated layout.
+
+### `doc.multiColumn(text, options?)` (v0.3.0)
+
+Render text in a multi-column newspaper-style layout. Text flows from one column to the next.
+
+```js
+doc.multiColumn(
+  'A long body of text that will be distributed across columns...',
+  {
+    columns: 3,   // number of columns (default: 2)
+    gap: 20,      // gap between columns in points (default: 20)
+  }
+)
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `columns` | `number` | `2` | Number of columns |
+| `gap` | `number` | `20` | Space between columns in points |
+
+Each column is laid out independently using Pretext, so wrapping is accurate within each column width.
+
+### `doc.footnote(number, text)` (v0.3.0)
+
+Add a footnote that renders at the bottom of the current page.
+
+```js
+doc.paragraph('TangentFlow uses Pretext for text measurement.[1]')
+doc.footnote(1, 'Pretext provides sub-pixel accurate text measurement via canvas.')
+
+doc.paragraph('The algorithm is based on Unicode UAX #14.[2]')
+doc.footnote(2, 'Unicode Line Breaking Algorithm, https://unicode.org/reports/tr14/')
+```
+
+Footnotes are collected during layout and rendered at the bottom of the page where they are referenced, separated from the body by a short divider line. If a footnote does not fit on the current page, it flows to the next page.
 
 ### `doc.divider()`
 
@@ -367,6 +510,21 @@ doc.spacer(40)    // 40pt
 ### `doc.pageBreak()`
 
 Force subsequent content onto a new page.
+
+### Page Break Control (v0.3.0)
+
+In addition to `doc.pageBreak()`, you can use the `breakBefore: true` option on headings and other block methods to force a page break before a specific block. This is useful for ensuring chapters or major sections always start on a new page.
+
+```js
+doc.heading('Chapter 1: Introduction')
+doc.paragraph('...')
+
+// Chapter 2 will always start on a new page
+doc.heading('Chapter 2: Methodology', { level: 1, breakBefore: true })
+doc.paragraph('...')
+```
+
+The `breakBefore` option is supported on `heading`, `paragraph`, `table`, `bulletList`, `numberedList`, and `multiColumn`.
 
 ### `doc.addBlock(block)`
 
@@ -413,6 +571,26 @@ const result = doc.build()
   pageSize: { w: 595.28, h: 841.89 },
   watermark: { text: 'DRAFT', color: [0.8, 0.8, 0.8], opacity: 0.15 },
   metadata: { title: 'Report', author: 'Team' },
+
+  // v0.3.0: Outline / Bookmarks
+  outline: [
+    { text: 'Main Title', level: 1, page: 0, y: 780, id: 'heading-0' },
+    { text: 'Section One', level: 2, page: 0, y: 520, id: 'heading-1' },
+    { text: 'Section Two', level: 2, page: 1, y: 780, id: 'heading-2' },
+  ],
+}
+```
+
+#### Outline / Bookmarks (v0.3.0)
+
+The `outline` array is automatically populated from all headings in the document. Each entry contains the heading text, its level, the page index it appears on, its Y coordinate, and a unique `id`. You can use this to create PDF bookmarks (outlines) with pdf-lib or other renderers:
+
+```js
+const { pages, outline } = doc.build()
+
+// With pdf-lib, create a bookmark tree from the outline:
+for (const entry of outline) {
+  pdfDoc.addBookmark(entry.text, pdfDoc.getPages()[entry.page], entry.y)
 }
 ```
 
@@ -645,7 +823,18 @@ TangentFlow uses three Pretext functions:
 | Text wrapping accuracy | Pixel-perfect | Approximate | Manual | Pixel-perfect |
 | CJK / Arabic / Emoji | Yes | Broken | No | Yes |
 | Table cell wrapping | Auto-sized | Basic | Plugin | CSS |
+| Table column widths / alignment | Yes (v0.3.0) | Yes | No | CSS |
+| Table border customization | Yes (v0.3.0) | Yes | No | CSS |
 | Text around images | Yes (`layoutNextLine`) | No | No | CSS float |
+| Inline color spans | Yes (v0.3.0) | No | No | CSS |
+| Superscript / Subscript | Yes (v0.3.0) | Yes | No | HTML |
+| Nested lists | Yes (v0.3.0) | Yes | No | HTML |
+| Table of Contents | Yes (v0.3.0) | Yes | No | Plugin |
+| PDF Bookmarks / Outline | Yes (v0.3.0) | Yes | No | No |
+| Multi-column layout | Yes (v0.3.0) | Yes | No | CSS |
+| Footnotes | Yes (v0.3.0) | Yes | No | CSS |
+| Image captions | Yes (v0.3.0) | No | No | HTML |
+| Page break control | Yes (v0.3.0) | Yes | No | CSS |
 | Runs in browser | Yes | Yes | Yes | No (server) |
 | Bundle size | ~10KB + Pretext | ~2MB | ~300KB | ~150MB |
 | Speed | ~2ms | ~5ms | ~3ms | ~2-5 seconds |

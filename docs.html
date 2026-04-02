@@ -81,6 +81,9 @@
             <li><a href="#block-divider">Divider</a></li>
             <li><a href="#block-spacer">Spacer</a></li>
             <li><a href="#block-page-break">Page Break</a></li>
+            <li><a href="#nested-lists">Nested Lists</a></li>
+            <li><a href="#multi-column">Multi-Column</a></li>
+            <li><a href="#image-captions">Image Captions</a></li>
 
             <li class="sidebar-section">Features</li>
             <li><a href="#inline-formatting">Inline Formatting</a></li>
@@ -89,6 +92,15 @@
             <li><a href="#colors">Document Colors</a></li>
             <li><a href="#metadata">PDF Metadata</a></li>
             <li><a href="#page-setup">Page Setup</a></li>
+            <li><a href="#table-options">Table Column Widths</a></li>
+            <li><a href="#table-options">Table Alignment</a></li>
+            <li><a href="#table-options">Table Borders</a></li>
+            <li><a href="#inline-colors">Inline Colors</a></li>
+            <li><a href="#superscript">Superscript/Subscript</a></li>
+            <li><a href="#toc">Table of Contents</a></li>
+            <li><a href="#outline">Bookmarks/Outline</a></li>
+            <li><a href="#footnotes">Footnotes</a></li>
+            <li><a href="#break-control">Page Break Control</a></li>
 
             <li class="sidebar-section">API Reference</li>
             <li><a href="#json-schema">JSON Schema</a></li>
@@ -236,6 +248,66 @@
             <p>Forces all subsequent content onto a new page. Useful for separating sections in multi-page documents.</p>
 <pre><code>{ "type": "page-break" }</code></pre>
 
+            <h2 id="nested-lists">Nested Lists</h2>
+            <p>Create hierarchical lists using nested arrays. Each sub-array becomes an indented level beneath its parent item. Nesting works for both bullet and numbered lists.</p>
+<pre><code>// Builder API
+doc.bulletList([
+  "Top-level item",
+  ["Sub-item A", "Sub-item B"],
+  "Another top-level item",
+  ["Nested under second", ["Deeply nested"]]
+])
+
+// JSON Schema
+{
+  "type": "bullet-list",
+  "items": [
+    "Top-level item",
+    ["Sub-item A", "Sub-item B"],
+    "Another top-level item",
+    ["Nested under second", ["Deeply nested"]]
+  ]
+}</code></pre>
+            <p>Each nesting level indents by 18pt and uses a smaller bullet marker (disc, circle, dash). Numbered lists restart their counter at each nesting level.</p>
+
+            <h2 id="multi-column">Multi-Column</h2>
+            <p>Flow text across multiple columns with automatic balancing. Unlike the fixed two-column block, multi-column supports 2-4 columns and text flows naturally from one column to the next.</p>
+<pre><code>// Builder API
+doc.multiColumn({
+  columns: 3,
+  gap: 24,
+  text: "Long body text that flows across three columns..."
+})
+
+// JSON Schema
+{
+  "type": "multi-column",
+  "columns": 3,
+  "gap": 24,
+  "text": "Long body text that flows across three columns..."
+}</code></pre>
+            <p>The <code>gap</code> property (in points) controls spacing between columns. Defaults to 20pt if omitted. Text is measured by Pretext and distributed evenly across all columns.</p>
+
+            <h2 id="image-captions">Image Captions</h2>
+            <p>Add captions below images. The caption text renders in a smaller, muted font beneath the image and supports inline formatting.</p>
+<pre><code>// Builder API
+doc.image({
+  src: "data:image/png;base64,...",
+  width: 300,
+  align: "center",
+  caption: "Figure 1: Quarterly revenue growth"
+})
+
+// JSON Schema
+{
+  "type": "image",
+  "src": "data:image/png;base64,...",
+  "width": 300,
+  "align": "center",
+  "caption": "Figure 1: Quarterly revenue growth"
+}</code></pre>
+            <p>Captions inherit the <strong>Muted Text</strong> color and render at 9pt. They are center-aligned relative to the image regardless of the image's own alignment setting.</p>
+
             <!-- ── Features ─────────────────────────────────── -->
             <h2 id="inline-formatting">Inline Formatting</h2>
             <p>Paragraphs support markdown-like inline formatting that renders with the correct fonts in both the canvas preview and the exported PDF:</p>
@@ -300,6 +372,174 @@
               <tr><td><strong>Orientation</strong></td><td>Portrait or Landscape (swaps width/height)</td></tr>
               <tr><td><strong>Margin</strong></td><td>Narrow (40pt), Normal (60pt), Wide (80pt)</td></tr>
             </table>
+
+            <h2 id="table-options">Table Options</h2>
+            <p>v0.3.0 adds fine-grained control over table column widths, cell alignment, and border rendering.</p>
+            <h3>Column Widths</h3>
+            <p>Override the automatic column sizing with explicit proportional or fixed widths:</p>
+<pre><code>// Builder API
+doc.table({
+  headers: "Name, Description, Price",
+  rows: "Widget, A useful widget, $9.99",
+  colWidths: [100, "auto", 80]
+})
+
+// JSON Schema
+{
+  "type": "table",
+  "headers": "Name, Description, Price",
+  "rows": "Widget, A useful widget, $9.99",
+  "colWidths": [100, "auto", 80]
+}</code></pre>
+            <p>Values can be numbers (fixed width in points) or <code>"auto"</code> to fill remaining space. If omitted, all columns auto-size based on content.</p>
+
+            <h3>Cell Alignment</h3>
+            <p>Set horizontal text alignment per column:</p>
+<pre><code>// Builder API
+doc.table({
+  headers: "Item, Qty, Price",
+  rows: "Widget, 5, $49.95",
+  align: ["left", "center", "right"]
+})
+
+// JSON Schema
+{
+  "type": "table",
+  "headers": "Item, Qty, Price",
+  "rows": "Widget, 5, $49.95",
+  "align": ["left", "center", "right"]
+}</code></pre>
+            <p>Accepted values are <code>"left"</code>, <code>"center"</code>, and <code>"right"</code>. If fewer entries than columns are provided, remaining columns default to <code>"left"</code>.</p>
+
+            <h3>Table Borders</h3>
+            <p>Control which borders are drawn around cells:</p>
+<pre><code>// Builder API
+doc.table({
+  headers: "A, B, C",
+  rows: "1, 2, 3",
+  borders: "all"
+})
+
+// JSON Schema
+{
+  "type": "table",
+  "headers": "A, B, C",
+  "rows": "1, 2, 3",
+  "borders": "all"
+}</code></pre>
+            <p>Supported values:</p>
+            <table>
+              <tr><th>Value</th><th>Description</th></tr>
+              <tr><td><code>"horizontal"</code></td><td>Row separators only (default)</td></tr>
+              <tr><td><code>"all"</code></td><td>Full grid with row and column borders</td></tr>
+              <tr><td><code>"outer"</code></td><td>Border around the entire table only</td></tr>
+              <tr><td><code>"none"</code></td><td>No borders at all</td></tr>
+            </table>
+
+            <h2 id="inline-colors">Inline Colors</h2>
+            <p>Apply color to inline text spans using the <code>{#hex|text}</code> syntax. Works in paragraphs, list items, headings, and table cells.</p>
+<pre><code>// Builder API
+doc.paragraph("Status: {#e74c3c|Overdue} — needs attention")
+
+// JSON Schema
+{
+  "type": "paragraph",
+  "text": "Status: {#e74c3c|Overdue} — needs attention"
+}</code></pre>
+            <p>The hex value must be a 6-digit color code preceded by <code>#</code>. Inline colors can be combined with bold, italic, and underline formatting.</p>
+
+            <h2 id="superscript">Superscript &amp; Subscript</h2>
+            <p>Render superscript and subscript text using caret and tilde syntax:</p>
+<pre><code>// Builder API
+doc.paragraph("E = mc^{2}")
+doc.paragraph("H~{2}O is water")
+
+// JSON Schema
+{
+  "type": "paragraph",
+  "text": "E = mc^{2}"
+}
+{
+  "type": "paragraph",
+  "text": "H~{2}O is water"
+}</code></pre>
+            <table>
+              <tr><th>Syntax</th><th>Result</th><th>Description</th></tr>
+              <tr><td><code>^{text}</code></td><td>superscript</td><td>Renders at 70% font size, raised above the baseline</td></tr>
+              <tr><td><code>~{text}</code></td><td>subscript</td><td>Renders at 70% font size, lowered below the baseline</td></tr>
+            </table>
+
+            <h2 id="toc">Table of Contents</h2>
+            <p>Automatically generate a table of contents from all heading blocks in the document. The TOC includes heading text, dot leaders, and page numbers.</p>
+<pre><code>// Builder API
+doc.tableOfContents({
+  title: "Contents",
+  maxLevel: 2
+})
+
+// JSON Schema
+{
+  "type": "toc",
+  "title": "Contents",
+  "maxLevel": 2
+}</code></pre>
+            <p>The <code>maxLevel</code> property controls which heading levels are included (1 = H1 only, 2 = H1 and H2, 3 = all). Defaults to 3. The TOC block should typically be placed near the beginning of the document. Page numbers are calculated during the flow engine pass and update automatically.</p>
+
+            <h2 id="outline">Bookmarks / Outline</h2>
+            <p>When building a PDF, the <code>build()</code> method now returns an outline tree alongside the PDF bytes. This outline provides the bookmark structure for PDF readers' navigation panels.</p>
+<pre><code>// Builder API
+const { pdfBytes, outline } = await doc.build()
+
+// The outline array looks like:
+[
+  { title: "Introduction", page: 0, children: [] },
+  { title: "Chapter 1", page: 1, children: [
+    { title: "Section 1.1", page: 1, children: [] },
+    { title: "Section 1.2", page: 2, children: [] }
+  ]},
+  { title: "Chapter 2", page: 4, children: [] }
+]
+
+// JSON Schema — outline is auto-generated from headings,
+// no schema property needed. Use metadata to control:
+{
+  "metadata": {
+    "outline": true
+  }
+}</code></pre>
+            <p>The outline is built from heading blocks: H1 becomes a top-level bookmark, H2 nests under the preceding H1, and H3 nests under the preceding H2. Set <code>metadata.outline</code> to <code>false</code> to disable.</p>
+
+            <h2 id="footnotes">Footnotes</h2>
+            <p>Add footnotes to any text content using bracket syntax. Footnotes are collected and rendered at the bottom of the page where they are referenced.</p>
+<pre><code>// Builder API
+doc.paragraph("TangentFlow uses Pretext[^1] for text measurement.")
+doc.footnote(1, "Pretext is a text layout library by Cheng Lou.")
+
+// JSON Schema
+{
+  "type": "paragraph",
+  "text": "TangentFlow uses Pretext[^1] for text measurement."
+}
+{
+  "type": "footnote",
+  "id": 1,
+  "text": "Pretext is a text layout library by Cheng Lou."
+}</code></pre>
+            <p>Footnote markers render as superscript numbers in the body text. The footnote text appears at the bottom of the page, separated by a short rule. If a footnote's reference and content appear on different pages, the footnote is placed on the page containing the reference.</p>
+
+            <h2 id="break-control">Page Break Control</h2>
+            <p>Use the <code>breakBefore</code> property on any block to force it onto a new page without inserting a separate page-break block. This is useful for ensuring sections always start on a fresh page.</p>
+<pre><code>// Builder API
+doc.heading("Chapter 2", { level: 1, breakBefore: true })
+
+// JSON Schema
+{
+  "type": "heading",
+  "text": "Chapter 2",
+  "level": 1,
+  "breakBefore": true
+}</code></pre>
+            <p>When <code>breakBefore</code> is <code>true</code>, the flow engine inserts a page break immediately before laying out the block. This differs from the page-break block type in that it is attached to a content block rather than being a standalone element. Any block type supports <code>breakBefore</code>.</p>
 
             <!-- ── API Reference ────────────────────────────── -->
             <h2 id="json-schema">JSON Schema</h2>

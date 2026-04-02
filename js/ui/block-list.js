@@ -46,6 +46,9 @@ export function buildBlockList(state, blockListEl, callbacks) {
       preview = `${count} field${count !== 1 ? 's' : ''}`
     }
     else if (b.type === 'two-column') preview = 'Two-column layout'
+    else if (b.type === 'multi-column') preview = `${b.columns || 3}-column layout`
+    else if (b.type === 'footnote') preview = `[${b.marker}] ${(b.text || '').slice(0, 40)}`
+    else if (b.type === 'toc') preview = 'Table of Contents'
     else if (b.type === 'spacer') preview = `${b.height}px spacing`
     else if (b.type === 'divider') preview = 'Horizontal line'
     else if (b.type === 'page-break') preview = 'Force new page'
