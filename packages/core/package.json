@@ -11,7 +11,8 @@
     "./blocks": "./src/blocks.js"
   },
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js",
+    "prepublishOnly": "npm test"
   },
   "files": [
     "src",
@@ -35,10 +36,10 @@
     "directory": "packages/core"
   },
   "peerDependencies": {
-    "@chenglou/pretext": ">=0.0.3"
+    "@chenglou/pretext": "^0.0.3"
   },
   "optionalDependencies": {
-    "canvas": ">=2.0.0"
+    "canvas": "^2.0.0 || ^3.0.0"
   },
   "devDependencies": {
     "@chenglou/pretext": "^0.0.3",
