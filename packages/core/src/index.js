@@ -184,7 +184,7 @@ export function createDocument(options = {}) {
      * @param {Object} data - { label: value, ... }
      */
     statRow(data) {
-      const items = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(', ')
+      const items = Object.entries(data).map(([k, v]) => ({ label: String(k), value: String(v) }))
       blocks.push({ type: 'stat-row', items })
       return builder
     },

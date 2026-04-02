@@ -484,9 +484,16 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
     // Measure all items — auto-scale value font if too wide
     const measured = items.map(item => {
-      const parts = item.split(':')
-      const label = parts[0]?.trim() || ''
-      const value = parts.slice(1).join(':').trim() || ''
+      // Accept { label, value } objects or legacy "Label: Value" strings
+      let label, value
+      if (typeof item === 'object' && item.label !== undefined) {
+        label = item.label
+        value = item.value
+      } else {
+        const parts = String(item).split(':')
+        label = parts[0]?.trim() || ''
+        value = parts.slice(1).join(':').trim() || ''
+      }
 
       // Label measurement
       const labelPrep = prepareWithSegments(label, `${labelFontSize}px Helvetica`)

@@ -75,7 +75,19 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
         flow.addPageBreak()
         break
       case 'stat-row': {
-        const items = block.items.split(',').map(s => s.trim()).filter(Boolean)
+        // Support both formats:
+        // 1. Array of { label, value } objects (new, from builder API)
+        // 2. Comma-separated "Label: Value" string (legacy, from UI/schema)
+        let items
+        if (Array.isArray(block.items)) {
+          items = block.items
+        } else {
+          // Legacy string format — split carefully on ", " (comma+space) not just ","
+          items = block.items.split(/,\s+(?=[^,]*:)/).map(s => {
+            const parts = s.split(':')
+            return { label: parts[0]?.trim() || '', value: parts.slice(1).join(':').trim() || '' }
+          }).filter(i => i.label || i.value)
+        }
         flow.addStatRow(items)
         break
       }
