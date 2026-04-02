@@ -1,0 +1,16 @@
+services:
+  api:
+    build: .
+    container_name: tangentflow-api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/data/tangentflow.db
+      - DODO_WEBHOOK_SECRET=${DODO_WEBHOOK_SECRET}
+      - DODO_API_KEY=${DODO_API_KEY}
+      - CORS_ORIGINS=https://tangentflow.com,https://api.tangentflow.com
+    volumes:
+      - ./data:/app/data

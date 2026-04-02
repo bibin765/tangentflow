@@ -4,3 +4,6 @@ node_modules/
 .npmrc
 assets/fonts/
 .vercel
+api/node_modules/
+api/data/
+.env

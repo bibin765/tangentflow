@@ -1,0 +1,20 @@
+{
+  "name": "tangentflow-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@upbrew/tangentflow": "^0.3.4",
+    "@chenglou/pretext": "^0.0.3",
+    "pdf-lib": "^1.17.1",
+    "canvas": "^3.2.3",
+    "fastify": "^5.2.1",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/rate-limit": "^10.2.1",
+    "better-sqlite3": "^12.2.0",
+    "crypto": "^1.0.1"
+  }
+}
