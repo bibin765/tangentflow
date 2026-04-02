@@ -475,31 +475,44 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
   function addStatRow(items) {
     clearFloat()
     const gap = 8
-    const cardPadX = 8
+    const cardPadX = 6
     const cardPadY = 8
     const labelFontSize = 8
-    const valueFontSize = 14
     const labelLH = labelFontSize * 1.3
-    const valueLH = valueFontSize * 1.3
     const cardW = (contentW - (items.length - 1) * gap) / items.length
     const innerW = cardW - cardPadX * 2
 
-    // Measure all items to find tallest card
+    // Measure all items — auto-scale value font if too wide
     const measured = items.map(item => {
       const parts = item.split(':')
       const label = parts[0]?.trim() || ''
       const value = parts.slice(1).join(':').trim() || ''
 
+      // Label measurement
       const labelPrep = prepareWithSegments(label, `${labelFontSize}px Helvetica`)
       const labelResult = layoutWithLines(labelPrep, innerW, labelLH)
-      const valuePrep = prepareWithSegments(value, `bold ${valueFontSize}px Helvetica`)
-      const valueResult = layoutWithLines(valuePrep, innerW, valueLH)
+
+      // Auto-scale value font: start at 14, shrink until it fits in one line or hits minimum
+      let vSize = 14
+      let vLH = vSize * 1.3
+      let valueResult
+      while (vSize >= 9) {
+        const valuePrep = prepareWithSegments(value, `bold ${vSize}px Helvetica`)
+        valueResult = layoutWithLines(valuePrep, innerW, vLH)
+        if (valueResult.lines.length <= 1) break
+        vSize -= 1
+        vLH = vSize * 1.3
+      }
+      // Final measurement at chosen size
+      const valuePrep = prepareWithSegments(value, `bold ${vSize}px Helvetica`)
+      valueResult = layoutWithLines(valuePrep, innerW, vLH)
 
       return { label, value, labelLines: labelResult.lines, valueLines: valueResult.lines,
-        labelH: labelResult.lines.length * labelLH, valueH: valueResult.lines.length * valueLH }
+        labelH: labelResult.lines.length * labelLH, valueH: valueResult.lines.length * vLH,
+        valueFontSize: vSize, valueLH: vLH }
     })
 
-    const cardH = Math.max(50, ...measured.map(m => m.labelH + m.valueH + cardPadY * 2 + 4))
+    const cardH = Math.max(50, ...measured.map(m => m.labelH + m.valueH + cardPadY * 2 + 6))
     ensureSpace(cardH + 8)
     const baseY = contentTopY() - curY - cardH
 
@@ -509,24 +522,21 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       // Card background
       addDrawCmd({ type: 'rect', x, y: baseY, w: cardW, h: cardH, color: c.statBg, radius: 4 })
 
-      // Layout: label on top, value below, vertically centered in card
-      // "cursorY" tracks position going downward (increasing = lower on page)
-      // In PDF coords: higher number = higher on page
+      // Vertically center label + value group
       const totalContentH = m.labelH + 6 + m.valueH
       const startFromTop = (cardH - totalContentH) / 2
-      // cardTop in PDF Y:
       const cardTop = baseY + cardH
 
-      // Label lines (rendered top-down)
+      // Label lines (top)
       m.labelLines.forEach((line, li) => {
         const y = cardTop - startFromTop - labelFontSize - li * labelLH
         addDrawCmd({ type: 'text', text: line.text, x: x + cardW / 2, y, fontSize: labelFontSize, fontKey: 'regular', color: c.muted, align: 'center' })
       })
 
-      // Value lines (below label + 6px gap)
+      // Value lines (below label + gap)
       m.valueLines.forEach((line, li) => {
-        const y = cardTop - startFromTop - m.labelH - 6 - valueFontSize - li * valueLH
-        addDrawCmd({ type: 'text', text: line.text, x: x + cardW / 2, y, fontSize: valueFontSize, fontKey: 'bold', color: c.heading, align: 'center' })
+        const y = cardTop - startFromTop - m.labelH - 6 - m.valueFontSize - li * m.valueLH
+        addDrawCmd({ type: 'text', text: line.text, x: x + cardW / 2, y, fontSize: m.valueFontSize, fontKey: 'bold', color: c.heading, align: 'center' })
       })
     })
     curY += cardH + 8
