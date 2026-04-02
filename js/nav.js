@@ -62,4 +62,21 @@
       </footer>
     `
   }
+  // ── Vercel Analytics ──
+  if (!document.querySelector('script[src*="vercel"]')) {
+    const s = document.createElement('script')
+    s.defer = true
+    s.src = 'https://va.vercel-scripts.com/v1/script.js'
+    s.setAttribute('data-endpoint', '/_vercel/insights')
+    document.head.appendChild(s)
+  }
+
+  // ── Vercel Speed Insights ──
+  if (!document.querySelector('script[src*="speed-insights"]')) {
+    const s = document.createElement('script')
+    s.defer = true
+    s.src = 'https://va.vercel-scripts.com/v1/speed-insights/script.js'
+    s.setAttribute('data-endpoint', '/_vercel/speed-insights')
+    document.head.appendChild(s)
+  }
 })()
