@@ -293,7 +293,9 @@ export function createDocument(options = {}) {
         ? { w: base.h, h: base.w }
         : { w: base.w, h: base.h }
 
-      const flow = processBlocks(blocks, pageSize.w, pageSize.h, margin, colors, headerFooter)
+      const engineOpts = {}
+      if (options.measureTextWidth) engineOpts.measureTextWidth = options.measureTextWidth
+      const flow = processBlocks(blocks, pageSize.w, pageSize.h, margin, colors, headerFooter, engineOpts)
 
       // Build outline tree from tracked headings
       const headings = flow.getHeadings()

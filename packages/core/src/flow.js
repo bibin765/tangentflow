@@ -1,7 +1,9 @@
 import { prepareWithSegments, layoutWithLines, layoutNextLine } from '@chenglou/pretext'
 import { hexToRgbArr } from './colors.js'
 
-export function createFlowEngine(pageW, pageH, margin, c, hf) {
+export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
+  const engineOpts = opts || {}
+  const customMeasure = engineOpts.measureTextWidth || null // (text, fontSize, fontKey) => number
   const headerH = (hf && (hf.headerLeft || hf.headerRight || hf.logoSrc)) ? 28 : 0
   const footerH = (hf && (hf.footerLeft || hf.footerRightMode !== 'none')) ? 24 : 0
   const contentW = pageW - margin * 2
@@ -179,11 +181,13 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
   // ─── Rich text (inline bold/italic/underline/links) ──
   // Measure run width using Pretext (works in both browser and Node.js)
   function measureRunWidth(text, fontSize, fontKey) {
+    // Use custom measure function if provided (e.g., pdf-lib font metrics)
+    if (customMeasure) return customMeasure(text, fontSize, fontKey)
+
     const weight = fontKey === 'bold' ? 'bold ' : fontKey === 'italic' ? 'italic ' : ''
     const fontStr = `${weight}${fontSize}px Helvetica`
     const prep = prepareWithSegments(text, fontStr)
     // Sum segment widths directly to include trailing whitespace
-    // (layoutWithLines trims trailing whitespace from reported line width)
     let totalWidth = 0
     for (const w of prep.widths) {
       totalWidth += w
@@ -443,10 +447,20 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       // Header background
       addDrawCmd({ type: 'rect', x: margin, y: rowY, w: contentW, h: headerRowH, color: c.tableHeader })
 
+      // Auto-contrast: use white text if header background is dark
+      const headerTextColor = (() => {
+        const bg = c.tableHeader
+        if (Array.isArray(bg)) {
+          const lum = 0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2]
+          return lum < 0.5 ? [1, 1, 1] : c.heading
+        }
+        return c.heading
+      })()
+
       // Header cell text (wrapped)
       headers.forEach((h, ci) => {
         const m = headerMeasurements[ci]
-        renderCellLines(m, getColX(ci), colWidths[ci], rowY, headerRowH, 'bold', c.heading, colAlign[ci])
+        renderCellLines(m, getColX(ci), colWidths[ci], rowY, headerRowH, 'bold', headerTextColor, colAlign[ci])
 
         if (borders.columns && ci > 0) {
           const sepX = getColX(ci)
@@ -619,7 +633,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
   // ─── Bullet / Numbered list ──────────────────────────────
   function addList(items, ordered, depth) {
-    clearFloat()
+    if (!depth) clearFloat() // only clear float for top-level lists
     const level = depth || 0
     const fontSize = 11
     const lineHeight = fontSize * 1.5
@@ -786,11 +800,80 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
   // ─── TOC (table of contents) ────────────────────────────
   function addTOC() {
-    // Placeholder — actual TOC is generated in a second pass after all headings are collected
-    // Mark the current position so we can insert TOC here later
-    const tocMarker = { _tocInsertPage: curPage, _tocInsertY: curY }
-    addDrawCmd({ type: '_toc_placeholder', page: curPage, y: curY })
-    return tocMarker
+    // Render a "Table of Contents" heading
+    addHeading('Table of Contents', 1, 22, c.heading)
+    addSpacer(8)
+
+    // Store insertion point — entries will be rendered by renderTOC() after all blocks
+    const tocPage = curPage
+    const tocY = curY
+    addDrawCmd({ type: '_toc_marker', page: tocPage, y: tocY })
+    // Reserve space (will be filled by renderTOC)
+    curY += 200 // rough estimate, adjusted in renderTOC
+  }
+
+  function renderTOC() {
+    // Find the TOC marker
+    let tocPage = -1, tocCmdIdx = -1
+    for (let pi = 0; pi < pages.length; pi++) {
+      for (let ci = 0; ci < pages[pi].length; ci++) {
+        if (pages[pi][ci].type === '_toc_marker') {
+          tocPage = pi
+          tocCmdIdx = ci
+          break
+        }
+      }
+      if (tocPage >= 0) break
+    }
+    if (tocPage < 0) return // no TOC requested
+
+    // Remove placeholder
+    const marker = pages[tocPage][tocCmdIdx]
+    pages[tocPage].splice(tocCmdIdx, 1)
+
+    // Generate TOC entries from tracked headings
+    const fontSize = 11
+    const lh = fontSize * 1.6
+    const tocCmds = []
+    let y = marker.y
+
+    for (const h of headings) {
+      // Skip the TOC heading itself
+      if (h.text === 'Table of Contents') continue
+
+      const indent = (h.level - 1) * 16
+      const pageNum = `${h.page + 1}`
+      const dotLeader = '.' .repeat(Math.max(1, Math.floor((contentW - indent - 40) / 4)))
+
+      // Heading text (left)
+      const textY = contentTopY() - y - fontSize
+      tocCmds.push({
+        type: 'text',
+        text: h.text,
+        x: margin + indent,
+        y: textY,
+        fontSize: h.level === 1 ? 11 : 10,
+        fontKey: h.level === 1 ? 'bold' : 'regular',
+        color: c.body,
+      })
+
+      // Page number (right-aligned)
+      tocCmds.push({
+        type: 'text',
+        text: pageNum,
+        x: margin + contentW,
+        y: textY,
+        fontSize: 10,
+        fontKey: 'regular',
+        color: c.muted,
+        align: 'right',
+      })
+
+      y += lh
+    }
+
+    // Insert TOC entries into the page
+    pages[tocPage].splice(tocCmdIdx, 0, ...tocCmds)
   }
 
   // ─── Multi-column flowing text ──────────────────────────
@@ -992,7 +1075,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
   return {
     addText, addHeading, addImage, addImageWithCaption, addTable, addDivider, addSpacer,
     addStatRow, addList, addQuote, addKeyValue, addTwoColumn, addMultiColumn,
-    addPageBreak, addTOC, addFootnote, renderFootnotes, clearFloat,
+    addPageBreak, addTOC, renderTOC, addFootnote, renderFootnotes, clearFloat,
     addPageNumbers, addHeadersFooters,
     pages, getHeadings, getMetrics: () => ({ pageCount: pages.length, contentW, contentH }),
   }

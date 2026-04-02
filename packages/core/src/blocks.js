@@ -1,8 +1,8 @@
 import { createFlowEngine } from './flow.js'
 
-export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter) {
+export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter, engineOpts) {
   const c = colors
-  const flow = createFlowEngine(pageW, pageH, margin, c, headerFooter)
+  const flow = createFlowEngine(pageW, pageH, margin, c, headerFooter, engineOpts)
 
   for (const block of blocks) {
     // Page break control options
@@ -108,6 +108,7 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
     }
   }
 
+  flow.renderTOC()
   flow.renderFootnotes()
   flow.addHeadersFooters()
   return flow
