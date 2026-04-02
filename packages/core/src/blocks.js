@@ -5,18 +5,23 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
   const flow = createFlowEngine(pageW, pageH, margin, c, headerFooter)
 
   for (const block of blocks) {
+    // Page break control options
+    if (block.breakBefore) flow.addPageBreak()
+
     switch (block.type) {
       case 'image': {
-        flow.addImage(block)
-        flow.addSpacer(8)
+        if (block.caption) {
+          flow.addImageWithCaption(block)
+        } else {
+          flow.addImage(block)
+          flow.addSpacer(8)
+        }
         break
       }
       case 'heading': {
         const sizes = { 1: 22, 2: 16, 3: 13 }
         const fs = sizes[block.level] || 16
-        flow.addSpacer(block.level === 1 ? 4 : 10)
-        flow.addText(block.text, fs, 'bold', { bold: true, color: c.heading, lineHeightMult: 1.3 })
-        flow.addSpacer(4)
+        flow.addHeading(block.text, block.level, fs, c.heading)
         break
       }
       case 'paragraph': {
@@ -31,13 +36,13 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
         break
       }
       case 'bullet-list': {
-        const items = block.items.split('\n').filter(s => s.trim())
+        const items = Array.isArray(block.items) ? block.items : block.items.split('\n').filter(s => s.trim())
         flow.addList(items, false)
         flow.addSpacer(4)
         break
       }
       case 'numbered-list': {
-        const items = block.items.split('\n').filter(s => s.trim())
+        const items = Array.isArray(block.items) ? block.items : block.items.split('\n').filter(s => s.trim())
         flow.addList(items, true)
         flow.addSpacer(4)
         break
@@ -48,14 +53,14 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
         break
       }
       case 'table': {
-        const headers = block.headers.split(',')
-        const rows = block.rows.split('\n').filter(r => r.trim())
-        flow.addTable(headers, rows)
+        const headers = Array.isArray(block.headers) ? block.headers : block.headers.split(',')
+        const rows = Array.isArray(block.rows) ? block.rows : block.rows.split('\n').filter(r => r.trim())
+        flow.addTable(headers, rows, { colWidths: block.colWidths, align: block.align, borders: block.borders })
         flow.addSpacer(8)
         break
       }
       case 'key-value': {
-        const items = block.items.split('\n').filter(s => s.trim())
+        const items = Array.isArray(block.items) ? block.items : block.items.split('\n').filter(s => s.trim())
         flow.addKeyValue(items)
         flow.addSpacer(4)
         break
@@ -65,6 +70,19 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
         flow.addSpacer(8)
         break
       }
+      case 'multi-column': {
+        flow.addMultiColumn(block.text || '', { columns: block.columns, gap: block.gap })
+        flow.addSpacer(8)
+        break
+      }
+      case 'toc': {
+        flow.addTOC()
+        break
+      }
+      case 'footnote': {
+        flow.addFootnote(block.marker, block.text)
+        break
+      }
       case 'spacer':
         flow.addSpacer(block.height)
         break
@@ -72,17 +90,13 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
         flow.addDivider()
         break
       case 'page-break':
-        flow.addPageBreak()
+        flow.addPageBreak(block)
         break
       case 'stat-row': {
-        // Support both formats:
-        // 1. Array of { label, value } objects (new, from builder API)
-        // 2. Comma-separated "Label: Value" string (legacy, from UI/schema)
         let items
         if (Array.isArray(block.items)) {
           items = block.items
         } else {
-          // Legacy string format — split carefully on ", " (comma+space) not just ","
           items = block.items.split(/,\s+(?=[^,]*:)/).map(s => {
             const parts = s.split(':')
             return { label: parts[0]?.trim() || '', value: parts.slice(1).join(':').trim() || '' }
@@ -94,6 +108,7 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
     }
   }
 
+  flow.renderFootnotes()
   flow.addHeadersFooters()
   return flow
 }

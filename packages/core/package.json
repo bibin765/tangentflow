@@ -1,9 +1,10 @@
 {
   "name": "@upbrew/tangentflow",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "PDF document generation with pixel-perfect text wrapping. Powered by Pretext.",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "readme": "README.md",
   "exports": {
     ".": "./src/index.js",

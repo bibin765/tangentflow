@@ -1,4 +1,5 @@
 import { prepareWithSegments, layoutWithLines, layoutNextLine } from '@chenglou/pretext'
+import { hexToRgbArr } from './colors.js'
 
 export function createFlowEngine(pageW, pageH, margin, c, hf) {
   const headerH = (hf && (hf.headerLeft || hf.headerRight || hf.logoSrc)) ? 28 : 0
@@ -9,6 +10,19 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
   const pages = [[]]
   let curPage = 0
   let curY = 0
+
+  // ─── Heading tracking (for TOC, bookmarks, internal links) ──
+  const headings = [] // { text, level, page, y, id }
+
+  function trackHeading(text, level) {
+    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    headings.push({ text, level, page: curPage, y: curY, id })
+  }
+
+  function getHeadings() { return headings }
+
+  // ─── Footnote tracking ──
+  const footnotes = [] // { marker, text, page }
 
   function remainingOnPage() {
     return contentH - curY
@@ -55,18 +69,20 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
   }
 
   // ─── Inline formatting parser ────────────────────────
-  // Parses **bold**, *italic*, __underline__, and [link](url)
+  // Parses **bold**, *italic*, __underline__, [link](url), {#hex|colored}, ^super^, ~sub~
   function parseInline(text) {
     const segments = []
-    // Regex matches: **bold**, *italic*, __underline__, [text](url), or plain text
-    const re = /\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|\[([^\]]+)\]\(([^)]+)\)|([^*_\[]+)/g
+    const re = /\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|\[([^\]]+)\]\(([^)]+)\)|\{(#[0-9a-fA-F]{3,8})\|([^}]+)\}|\^([^^]+)\^|~([^~]+)~|([^*_\[{^~]+)/g
     let m
     while ((m = re.exec(text)) !== null) {
       if (m[1] !== undefined) segments.push({ text: m[1], style: 'bold' })
       else if (m[2] !== undefined) segments.push({ text: m[2], style: 'underline' })
       else if (m[3] !== undefined) segments.push({ text: m[3], style: 'italic' })
       else if (m[4] !== undefined) segments.push({ text: m[4], style: 'link', url: m[5] })
-      else if (m[6] !== undefined) segments.push({ text: m[6], style: 'regular' })
+      else if (m[7] !== undefined) segments.push({ text: m[7], style: 'color', color: hexToRgbArr(m[6]) })
+      else if (m[8] !== undefined) segments.push({ text: m[8], style: 'superscript' })
+      else if (m[9] !== undefined) segments.push({ text: m[9], style: 'subscript' })
+      else if (m[10] !== undefined) segments.push({ text: m[10], style: 'regular' })
     }
     if (segments.length === 0) segments.push({ text, style: 'regular' })
     return segments
@@ -74,7 +90,15 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
   // Check if text has inline formatting
   function hasInlineFormatting(text) {
-    return /\*\*.+?\*\*|__.+?__|(?<!\*)\*(?!\*).+?(?<!\*)\*(?!\*)|\[.+?\]\(.+?\)/.test(text)
+    return /\*\*.+?\*\*|__.+?__|(?<!\*)\*(?!\*).+?(?<!\*)\*(?!\*)|\[.+?\]\(.+?\)|\{#[0-9a-fA-F]+\|.+?\}|\^[^^]+\^|~[^~]+~/.test(text)
+  }
+
+  // ─── Heading (tracked for TOC/bookmarks) ─────────────
+  function addHeading(text, level, fontSize, color) {
+    if (level === 1) addSpacer(4); else addSpacer(10)
+    trackHeading(text, level)
+    addText(text, fontSize, 'bold', { bold: true, color, lineHeightMult: 1.3 })
+    addSpacer(4)
   }
 
   // ─── Text block: uses Pretext for measurement ────────
@@ -172,11 +196,11 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     const maxWidth = contentW - indent
     const segments = parseInline(text)
 
-    // Build styled character array: each char knows its style
+    // Build styled character array: each char knows its style + metadata
     const chars = []
     for (const seg of segments) {
       for (const ch of seg.text) {
-        chars.push({ ch, style: seg.style, url: seg.url })
+        chars.push({ ch, style: seg.style, url: seg.url, color: seg.color })
       }
     }
 
@@ -203,34 +227,42 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       const runs = []
       let currentStyle = null
       let currentUrl = null
+      let currentColor = null
       let runText = ''
 
       for (let i = 0; i < lineText.length; i++) {
         const ci = charPos + i
-        const style = ci < chars.length ? chars[ci].style : 'regular'
-        const url = ci < chars.length ? chars[ci].url : null
+        const ch = ci < chars.length ? chars[ci] : { style: 'regular' }
 
-        if (style !== currentStyle || url !== currentUrl) {
-          if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl })
-          currentStyle = style
-          currentUrl = url
+        if (ch.style !== currentStyle || ch.url !== currentUrl || ch.color !== currentColor) {
+          if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl, color: currentColor })
+          currentStyle = ch.style
+          currentUrl = ch.url
+          currentColor = ch.color
           runText = lineText[i]
         } else {
           runText += lineText[i]
         }
       }
-      if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl })
+      if (runText) runs.push({ text: runText, style: currentStyle, url: currentUrl, color: currentColor })
 
       // Render each run at the correct x position
       let x = margin + indent
       for (const run of runs) {
         if (!run.text) continue
         const fk = run.style === 'bold' ? 'bold' : run.style === 'italic' ? 'italic' : 'regular'
-        const runColor = run.style === 'link' ? c.accent : color
+        let runColor = color
+        if (run.style === 'link') runColor = c.accent
+        else if (run.style === 'color' && run.color) runColor = run.color
 
-        addDrawCmd({ type: 'text', text: run.text, x, y: absY, fontSize, fontKey: fk, color: runColor })
+        // Super/subscript: smaller font, shifted Y
+        const isSuperSub = run.style === 'superscript' || run.style === 'subscript'
+        const runFontSize = isSuperSub ? Math.round(fontSize * 0.7) : fontSize
+        const yOffset = run.style === 'superscript' ? fontSize * 0.3 : run.style === 'subscript' ? -fontSize * 0.15 : 0
 
-        const runW = measureRunWidth(run.text, fontSize, fk)
+        addDrawCmd({ type: 'text', text: run.text, x, y: absY + yOffset, fontSize: runFontSize, fontKey: fk, color: runColor })
+
+        const runW = measureRunWidth(run.text, isSuperSub ? runFontSize : fontSize, fk)
         x += runW
 
         if (run.style === 'underline' || run.style === 'link') {
@@ -296,13 +328,31 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     return { lines: result.lines, height: result.lines.length * lineHeight, lineHeight }
   }
 
-  function calculateColumnWidths(headers, rows, fontSize) {
+  function calculateColumnWidths(headers, rows, fontSize, explicitWidths) {
     const colCount = headers.length
     const cellPadX = 8
     const cellPadBoth = cellPadX * 2
     const minColW = 40
     const fontStr = `${fontSize}px Helvetica`
     const boldFontStr = `bold ${fontSize}px Helvetica`
+
+    // If explicit widths provided, resolve them
+    if (explicitWidths && explicitWidths.length === colCount) {
+      const fixed = []
+      let fixedTotal = 0
+      let autoCount = 0
+      for (let i = 0; i < colCount; i++) {
+        if (typeof explicitWidths[i] === 'number') {
+          fixed[i] = explicitWidths[i]
+          fixedTotal += explicitWidths[i]
+        } else {
+          fixed[i] = null
+          autoCount++
+        }
+      }
+      const autoWidth = autoCount > 0 ? (contentW - fixedTotal) / autoCount : 0
+      return fixed.map(w => w !== null ? w : Math.max(minColW, autoWidth))
+    }
 
     // Measure natural (unwrapped) width of every cell
     const naturalWidths = new Array(colCount).fill(0)
@@ -329,13 +379,10 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
 
     let colWidths
     if (totalNatural <= contentW) {
-      // All fits — distribute extra space proportionally
       const extra = contentW - totalNatural
       colWidths = naturalWidths.map(w => w + (extra * (w / totalNatural)))
     } else {
-      // Need to shrink — allocate proportionally but with minimum
       colWidths = naturalWidths.map(w => Math.max(minColW, (w / totalNatural) * contentW))
-      // Normalize to fit contentW
       const total = colWidths.reduce((s, w) => s + w, 0)
       colWidths = colWidths.map(w => (w / total) * contentW)
     }
@@ -343,16 +390,19 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     return colWidths
   }
 
-  function addTable(headers, rows) {
+  function addTable(headers, rows, tableOpts) {
     clearFloat()
+    const opts = tableOpts || {}
     const fontSize = 10
     const cellPadX = 8
     const cellPadY = 6
     const colCount = headers.length
-    const borderColor = c.divider
+    const colAlign = opts.align || []
+    const borders = Object.assign({ outer: true, header: true, rows: true, columns: true, width: 0.5, color: null }, opts.borders || {})
+    const borderColor = borders.color ? (Array.isArray(borders.color) ? borders.color : hexToRgbArr(borders.color)) : c.divider
 
     // Smart column width calculation using Pretext
-    const colWidths = calculateColumnWidths(headers, rows, fontSize)
+    const colWidths = calculateColumnWidths(headers, rows, fontSize, opts.colWidths)
 
     function getColX(ci) {
       let x = margin
@@ -363,10 +413,15 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     // Helper: render wrapped lines top-aligned inside a cell
     // In PDF coords: top of cell = rowY + rowH, we want text starting cellPadY below that
     // Each line goes further down (decreasing Y in PDF)
-    function renderCellLines(m, x, rowY, rowH, fontKey, color) {
-      // Top of text area in PDF coords (high Y = top of page)
+    function renderCellLines(m, cellX, cellW, rowY, rowH, fontKey, color, align) {
       const topY = rowY + rowH - cellPadY - fontSize
       m.lines.forEach((line, li) => {
+        let x = cellX + cellPadX
+        if (align === 'right') {
+          x = cellX + cellW - cellPadX - (line.width || 0)
+        } else if (align === 'center') {
+          x = cellX + (cellW - (line.width || 0)) / 2
+        }
         addDrawCmd({
           type: 'text', text: line.text, x,
           y: topY - li * m.lineHeight,
@@ -391,18 +446,17 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       // Header cell text (wrapped)
       headers.forEach((h, ci) => {
         const m = headerMeasurements[ci]
-        const x = getColX(ci) + cellPadX
-        renderCellLines(m, x, rowY, headerRowH, 'bold', c.heading)
+        renderCellLines(m, getColX(ci), colWidths[ci], rowY, headerRowH, 'bold', c.heading, colAlign[ci])
 
-        // Column separator
-        if (ci > 0) {
+        if (borders.columns && ci > 0) {
           const sepX = getColX(ci)
-          addDrawCmd({ type: 'line', x1: sepX, y1: rowY, x2: sepX, y2: rowY + headerRowH, color: borderColor })
+          addDrawCmd({ type: 'line', x1: sepX, y1: rowY, x2: sepX, y2: rowY + headerRowH, color: borderColor, lineWidth: borders.width })
         }
       })
 
-      // Bottom border
-      addDrawCmd({ type: 'line', x1: margin, y1: rowY, x2: margin + contentW, y2: rowY, color: borderColor })
+      if (borders.header) {
+        addDrawCmd({ type: 'line', x1: margin, y1: rowY, x2: margin + contentW, y2: rowY, color: borderColor, lineWidth: borders.width })
+      }
 
       curY += headerRowH
     }
@@ -441,25 +495,26 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
       // Cell content (wrapped text)
       for (let ci = 0; ci < colCount; ci++) {
         const m = cellMeasurements[ci]
-        const x = getColX(ci) + cellPadX
-        renderCellLines(m, x, rowY, rowH, 'regular', c.body)
+        renderCellLines(m, getColX(ci), colWidths[ci], rowY, rowH, 'regular', c.body, colAlign[ci])
 
-        // Column separator
-        if (ci > 0) {
+        if (borders.columns && ci > 0) {
           const sepX = getColX(ci)
-          addDrawCmd({ type: 'line', x1: sepX, y1: rowY, x2: sepX, y2: rowY + rowH, color: borderColor })
+          addDrawCmd({ type: 'line', x1: sepX, y1: rowY, x2: sepX, y2: rowY + rowH, color: borderColor, lineWidth: borders.width })
         }
       }
 
-      // Row bottom border
-      addDrawCmd({ type: 'line', x1: margin, y1: rowY, x2: margin + contentW, y2: rowY, color: c.divider })
+      if (borders.rows) {
+        addDrawCmd({ type: 'line', x1: margin, y1: rowY, x2: margin + contentW, y2: rowY, color: borderColor, lineWidth: borders.width })
+      }
 
       curY += rowH
     })
 
     // Table bottom border
-    const bottomY = contentTopY() - curY
-    addDrawCmd({ type: 'line', x1: margin, y1: bottomY, x2: margin + contentW, y2: bottomY, color: borderColor })
+    if (borders.outer) {
+      const bottomY = contentTopY() - curY
+      addDrawCmd({ type: 'line', x1: margin, y1: bottomY, x2: margin + contentW, y2: bottomY, color: borderColor, lineWidth: borders.width })
+    }
   }
 
   // ─── Divider ────────────────────────────────────────────
@@ -563,21 +618,35 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
   }
 
   // ─── Bullet / Numbered list ──────────────────────────────
-  function addList(items, ordered) {
+  function addList(items, ordered, depth) {
     clearFloat()
+    const level = depth || 0
     const fontSize = 11
     const lineHeight = fontSize * 1.5
-    const indent = 18
+    const baseIndent = 18
+    const levelIndent = level * 14
+    const indent = baseIndent + levelIndent
     const markerWidth = ordered ? 20 : 12
+    const bulletChars = ['\u2022', '\u25E6', '\u25AA'] // • ◦ ▪
 
-    items.forEach((item, i) => {
-      if (!item.trim()) return
-      const marker = ordered ? `${i + 1}.` : '\u2022'
+    let counter = 0
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+
+      // Nested list: array within the items array
+      if (Array.isArray(item)) {
+        addList(item, ordered, level + 1)
+        continue
+      }
+
+      if (typeof item === 'string' && !item.trim()) continue
+      counter++
+
+      const marker = ordered ? `${counter}.` : (bulletChars[level] || bulletChars[bulletChars.length - 1])
       const fontStr = `${fontSize}px Helvetica`
-      const prepared = prepareWithSegments(item, fontStr)
+      const prepared = prepareWithSegments(String(item), fontStr)
       const result = layoutWithLines(prepared, contentW - indent - markerWidth, lineHeight)
 
-      // First line: marker + text
       for (let li = 0; li < result.lines.length; li++) {
         ensureSpace(lineHeight)
         const absY = contentTopY() - curY - fontSize
@@ -587,8 +656,8 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
         addDrawCmd({ type: 'text', text: result.lines[li].text, x: margin + indent, y: absY, fontSize, fontKey: 'regular', color: c.body })
         curY += lineHeight
       }
-      curY += 2 // small gap between items
-    })
+      curY += 2
+    }
   }
 
   // ─── Quote / Callout ────────────────────────────────────
@@ -710,9 +779,105 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     }
   }
 
-  // ─── Page break ─────────────────────────────────────────
-  function addPageBreak() {
+  // ─── Page break with options ─────────────────────────────
+  function addPageBreak(opts) {
     newPage()
+  }
+
+  // ─── TOC (table of contents) ────────────────────────────
+  function addTOC() {
+    // Placeholder — actual TOC is generated in a second pass after all headings are collected
+    // Mark the current position so we can insert TOC here later
+    const tocMarker = { _tocInsertPage: curPage, _tocInsertY: curY }
+    addDrawCmd({ type: '_toc_placeholder', page: curPage, y: curY })
+    return tocMarker
+  }
+
+  // ─── Multi-column flowing text ──────────────────────────
+  function addMultiColumn(text, opts) {
+    clearFloat()
+    const columns = (opts && opts.columns) || 3
+    const gap = (opts && opts.gap) || 16
+    const fontSize = 11
+    const lineHeight = fontSize * 1.5
+    const colW = (contentW - (columns - 1) * gap) / columns
+    const fontStr = `${fontSize}px Helvetica`
+
+    const prepared = prepareWithSegments(text, fontStr)
+
+    // Layout all lines at column width
+    const result = layoutWithLines(prepared, colW, lineHeight)
+    const lines = result.lines
+
+    // Distribute lines across columns, balanced
+    const linesPerCol = Math.ceil(lines.length / columns)
+    const colStartY = curY
+
+    for (let col = 0; col < columns; col++) {
+      const startLine = col * linesPerCol
+      const endLine = Math.min(startLine + linesPerCol, lines.length)
+      const colX = margin + col * (colW + gap)
+
+      let localY = colStartY
+      for (let li = startLine; li < endLine; li++) {
+        ensureSpace(lineHeight)
+        const absY = contentTopY() - localY - fontSize
+        addDrawCmd({ type: 'text', text: lines[li].text, x: colX, y: absY, fontSize, fontKey: 'regular', color: c.body })
+        localY += lineHeight
+      }
+    }
+
+    // Advance curY past the tallest column
+    curY = colStartY + linesPerCol * lineHeight
+  }
+
+  // ─── Image with caption ─────────────────────────────────
+  function addImageWithCaption(block) {
+    addImage(block)
+    if (block.caption) {
+      const capFontSize = 9
+      const capLH = capFontSize * 1.4
+      const capFont = `italic ${capFontSize}px Helvetica`
+      const prepared = prepareWithSegments(block.caption, capFont)
+      const result = layoutWithLines(prepared, contentW, capLH)
+      for (const line of result.lines) {
+        ensureSpace(capLH)
+        const absY = contentTopY() - curY - capFontSize
+        addDrawCmd({ type: 'text', text: line.text, x: margin + (contentW - (line.width || 0)) / 2, y: absY, fontSize: capFontSize, fontKey: 'italic', color: c.muted })
+        curY += capLH
+      }
+      curY += 4
+    }
+  }
+
+  // ─── Footnote collection ────────────────────────────────
+  function addFootnote(marker, text) {
+    footnotes.push({ marker: String(marker), text, page: curPage })
+  }
+
+  function renderFootnotes() {
+    // Group footnotes by page, render at bottom of each page
+    const byPage = {}
+    for (const fn of footnotes) {
+      if (!byPage[fn.page]) byPage[fn.page] = []
+      byPage[fn.page].push(fn)
+    }
+    for (const [pageIdx, fns] of Object.entries(byPage)) {
+      const pi = parseInt(pageIdx)
+      const cmds = pages[pi]
+      if (!cmds) continue
+      const fontSize = 8
+      const lh = fontSize * 1.4
+      let footY = margin + footerH + 20
+
+      // Separator line
+      cmds.push({ type: 'line', x1: margin, y1: footY + fns.length * lh + 4, x2: margin + contentW * 0.3, y2: footY + fns.length * lh + 4, color: c.divider })
+
+      fns.forEach((fn, i) => {
+        const y = footY + (fns.length - 1 - i) * lh
+        cmds.push({ type: 'text', text: `${fn.marker}. ${fn.text}`, x: margin, y, fontSize, fontKey: 'regular', color: c.muted })
+      })
+    }
   }
 
   // ─── Page numbers (legacy, now handled by addHeadersFooters) ──
@@ -824,5 +989,11 @@ export function createFlowEngine(pageW, pageH, margin, c, hf) {
     })
   }
 
-  return { addText, addImage, addTable, addDivider, addSpacer, addStatRow, addList, addQuote, addKeyValue, addTwoColumn, addPageBreak, clearFloat, addPageNumbers, addHeadersFooters, pages, getMetrics: () => ({ pageCount: pages.length, contentW, contentH }) }
+  return {
+    addText, addHeading, addImage, addImageWithCaption, addTable, addDivider, addSpacer,
+    addStatRow, addList, addQuote, addKeyValue, addTwoColumn, addMultiColumn,
+    addPageBreak, addTOC, addFootnote, renderFootnotes, clearFloat,
+    addPageNumbers, addHeadersFooters,
+    pages, getHeadings, getMetrics: () => ({ pageCount: pages.length, contentW, contentH }),
+  }
 }

@@ -67,4 +67,56 @@ for (const cmd of cmds) {
 }
 console.log('Command types:', types)
 
+console.log('\n=== Test 4: New Phase 1-3 features ===')
+const doc2 = createDocument({ page: { size: 'a4' }, colors: { heading: '#1a1820' } })
+
+// Table with column widths, alignment, borders
+doc2.table({
+  headers: ['Name', 'Department', 'Salary', 'Status'],
+  rows: [
+    ['Alice Johnson', 'Engineering', '$145,000', 'Active'],
+    ['Bob Smith', 'Marketing', '$98,500', 'Active'],
+  ],
+  colWidths: [150, 'auto', 80, 60],
+  align: ['left', 'left', 'right', 'center'],
+  borders: { rows: true, columns: false, width: 1 },
+})
+
+// Inline colors and superscript/subscript
+doc2.paragraph('The formula for water is H~2~O and energy is E=mc^2^.')
+doc2.paragraph('This has {#ff0000|red text} and {#0066cc|blue text} inline.')
+
+// Nested lists
+doc2.bulletList([
+  'Top level item 1',
+  ['Nested item 1.1', 'Nested item 1.2'],
+  'Top level item 2',
+  ['Nested 2.1', ['Deep nested 2.1.1']],
+])
+
+// Multi-column
+doc2.multiColumn('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.', { columns: 3 })
+
+// Image with caption
+doc2.heading('Section with Footnote', { level: 2, breakBefore: false })
+doc2.paragraph('This paragraph references a footnote.')
+doc2.footnote(1, 'This is the footnote content at the bottom of the page.')
+
+// TOC (placeholder)
+doc2.heading('Appendix', { level: 1 })
+
+const result3 = doc2.build()
+console.log(`Pages: ${result3.pages.length}`)
+console.log(`Outline entries: ${result3.outline.length}`)
+console.log(`Outline:`, result3.outline.map(h => `${'  '.repeat(h.level - 1)}${h.text} (p${h.page + 1})`).join(', '))
+
+// Verify statRow with commas in values
+const doc3 = createDocument()
+doc3.statRow({ 'Total': '9,450', 'Open': '442', 'Growth': '+23.5%' })
+const r3 = doc3.build()
+const statTexts = r3.pages[0].filter(c => c.type === 'text').map(c => c.text)
+console.log('StatRow texts:', statTexts)
+const has9450 = statTexts.some(t => t === '9,450')
+console.log(`Comma-in-value preserved: ${has9450 ? 'YES' : 'NO'}`)
+
 console.log('\n=== All tests passed! ===')
