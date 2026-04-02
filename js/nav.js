@@ -19,6 +19,7 @@
             <li><a href="${prefix}index.html#features"${activeClass('features')}>Features</a></li>
             <li><a href="${prefix}pricing.html"${activeClass('pricing')}>Pricing</a></li>
             <li><a href="${prefix}docs.html"${activeClass('docs')}>Docs</a></li>
+            <li><a href="${prefix}api-dashboard.html"${activeClass('api')}>API</a></li>
             <li><a href="${prefix}blog/index.html"${activeClass('blog')}>Blog</a></li>
             <li><a href="${prefix}about.html"${activeClass('about')}>About</a></li>
             <li class="nav-cta"><a href="${prefix}app.html" class="btn btn-primary btn-sm">Launch App</a></li>
