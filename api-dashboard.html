@@ -85,22 +85,34 @@
     .code-panel.active { display: block; }
     .signup-form {
       display: flex;
-      gap: 8px;
-      max-width: 480px;
+      gap: 0;
+      max-width: 520px;
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-pill);
+      padding: 4px;
+      align-items: center;
     }
     .signup-form input {
       flex: 1;
-      padding: 12px 16px;
-      border: 1.5px solid var(--color-border);
+      padding: 12px 20px;
+      border: none;
       border-radius: var(--radius-pill);
       font-size: 0.9375rem;
       font-family: var(--font-body);
       outline: none;
-      background: var(--color-surface);
+      background: transparent;
       color: var(--color-text);
+      min-width: 0;
     }
-    .signup-form input:focus { border-color: var(--color-accent); }
-    .signup-form button { white-space: nowrap; }
+    .signup-form input::placeholder { color: var(--color-text-muted); }
+    .signup-form:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-bg); }
+    .signup-form button {
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 12px 24px;
+      border-radius: var(--radius-pill);
+    }
     .dashboard { display: none; }
     .marketing { display: block; }
     .dashboard-grid {
@@ -110,7 +122,8 @@
     }
     @media (max-width: 768px) {
       .dashboard-grid { grid-template-columns: 1fr; }
-      .signup-form { flex-direction: column; }
+      .signup-form { flex-direction: column; border-radius: var(--radius-md); }
+      .signup-form button { width: 100%; justify-content: center; }
     }
     .try-widget {
       background: #1a1815;
