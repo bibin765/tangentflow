@@ -89,6 +89,11 @@ export function processBlocks(blocks, pageW, pageH, margin, colors, headerFooter
       case 'divider':
         flow.addDivider()
         break
+      case 'qr-code': {
+        flow.addQRCode(block)
+        flow.addSpacer(8)
+        break
+      }
       case 'page-break':
         flow.addPageBreak(block)
         break

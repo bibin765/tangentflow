@@ -798,6 +798,21 @@ export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
     }
   }
 
+  // ─── QR Code ────────────────────────────────────────────
+  function addQRCode(block) {
+    const size = block.size || 100
+    const align = block.align || 'center'
+    ensureSpace(size)
+
+    let x = margin
+    if (align === 'center') x = margin + (contentW - size) / 2
+    else if (align === 'right') x = margin + contentW - size
+    const y = contentTopY() - curY - size
+
+    addDrawCmd({ type: 'qr', data: block.data, x, y, w: size, h: size })
+    curY += size
+  }
+
   // ─── Page break with options ─────────────────────────────
   function addPageBreak(opts) {
     newPage()
@@ -1097,7 +1112,7 @@ export function createFlowEngine(pageW, pageH, margin, c, hf, opts) {
   return {
     addText, addHeading, addImage, addImageWithCaption, addTable, addDivider, addSpacer,
     addStatRow, addList, addQuote, addKeyValue, addTwoColumn, addMultiColumn,
-    addPageBreak, addTOC, renderTOC, addFootnote, renderFootnotes, clearFloat,
+    addQRCode, addPageBreak, addTOC, renderTOC, addFootnote, renderFootnotes, clearFloat,
     addPageNumbers, addHeadersFooters,
     pages, getHeadings, getMetrics: () => ({ pageCount: pages.length, contentW, contentH }),
   }

@@ -8,6 +8,7 @@ import { authMiddleware } from './middleware/auth.js'
 import renderRoute from './routes/render.js'
 import keysRoute from './routes/keys.js'
 import webhooksRoute from './routes/webhooks.js'
+import fillRoute from './routes/fill.js'
 
 const PORT = process.env.PORT || 3001
 const HOST = process.env.HOST || '0.0.0.0'
@@ -50,6 +51,8 @@ fastify.get('/', async () => ({
     'POST /v1/render': 'Generate a PDF from JSON schema',
     'GET /v1/usage': 'Check your usage stats',
     'GET /v1/keys': 'List your API keys',
+    'POST /v1/fill': 'Fill form fields in a PDF template',
+    'POST /v1/fill/fields': 'List form fields in a PDF',
   },
 }))
 
@@ -80,6 +83,7 @@ fastify.register(async (publicApp) => {
 fastify.register(async (authedApp) => {
   authedApp.addHook('preHandler', authMiddleware)
   await authedApp.register(renderRoute)
+  await authedApp.register(fillRoute)
   await authedApp.register(keysRoute)
 })
 

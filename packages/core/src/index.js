@@ -235,6 +235,16 @@ export function createDocument(options = {}) {
       return builder
     },
 
+    /**
+     * Add a QR code
+     * @param {string} data - URL or string to encode
+     * @param {Object} [opts] - { size, align }
+     */
+    qrCode(data, opts = {}) {
+      blocks.push({ type: 'qr-code', data, size: opts.size || 100, align: opts.align || 'center' })
+      return builder
+    },
+
     /** Force a page break */
     pageBreak() {
       blocks.push({ type: 'page-break' })
