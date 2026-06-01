@@ -886,6 +886,8 @@ a { color: inherit; text-decoration: none; }
   .hero { padding: var(--space-2xl) 0 var(--space-xl); }
   .hero .hero-actions { flex-direction: column; align-items: center; }
 
+  .api-spotlight-grid { grid-template-columns: 1fr !important; }
+
   .nav-links { display: none !important; }
   .nav-hamburger { display: block; }
 

@@ -84,11 +84,11 @@
       <h1 class="heading-xl">PDF documents with text<br>wrapping that actually works.</h1>
       <p class="body-lg">TangentFlow is a browser-based document builder powered by Pretext. Create professional PDFs with mathematically precise text layout &mdash; no server, no dependencies, no broken line breaks.</p>
       <div class="hero-actions">
-        <a href="app.html" class="btn btn-primary btn-lg">Launch the Builder</a>
-        <a href="#features" class="btn btn-secondary btn-lg">See How It Works</a>
+        <a href="api-dashboard.html" class="btn btn-primary btn-lg">Get API Access &rarr;</a>
+        <a href="app.html" class="btn btn-secondary btn-lg">Launch the Builder</a>
       </div>
       <div style="margin-top:var(--space-xl);">
-        <p class="caption" style="margin-bottom:var(--space-sm);">Or install the npm package:</p>
+        <p class="caption" style="margin-bottom:var(--space-sm);">Generate PDFs from any backend &mdash; or install the npm package:</p>
         <code style="background:var(--color-bg-alt);padding:10px 20px;border-radius:var(--radius-pill);font-family:var(--font-mono);font-size:0.875rem;color:var(--color-text);border:1px solid var(--color-border-light);">npm install @upbrew/tangentflow</code>
       </div>
     </div>
@@ -605,6 +605,37 @@
     </div>
   </section>
 
+  <!-- ── API Spotlight ───────────────────────────────────── -->
+  <section class="section section-border" id="api">
+    <div class="container">
+      <div style="background:#1a1815;border-radius:var(--radius-lg);padding:var(--space-2xl);overflow:hidden;position:relative;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2xl);align-items:center;" class="api-spotlight-grid">
+          <div>
+            <span class="badge" style="background:rgba(125,152,133,0.18);color:#a3be8c;border-color:rgba(125,152,133,0.25);">REST API &mdash; Early Access</span>
+            <h2 class="heading-lg" style="color:#fff;margin-top:var(--space-md);">Generate PDFs from any backend.</h2>
+            <p class="body-lg" style="color:#c8c4bc;margin-top:var(--space-md);">POST a JSON document, get pixel-perfect PDF bytes back. No headless browser, no Docker, no servers to manage. Works with Python, Ruby, Go, PHP &mdash; any language that speaks HTTP.</p>
+            <div style="margin-top:var(--space-xl);display:flex;gap:var(--space-md);flex-wrap:wrap;">
+              <a href="api-dashboard.html" class="btn btn-primary btn-lg">Get API Access &rarr;</a>
+              <a href="docs.html" class="btn btn-ghost btn-lg" style="color:#c8c4bc;">Read the Docs</a>
+            </div>
+          </div>
+          <div style="background:#000;border-radius:var(--radius-md);padding:var(--space-lg);overflow-x:auto;">
+<pre style="margin:0;color:#e8e4dc;font-size:0.8125rem;line-height:1.7;"><code><span style="color:#a3be8c;">curl</span> -X POST https://api.tangentflow.com/v1/render \
+  -H <span style="color:#a3be8c;">"Authorization: Bearer tf_your_key"</span> \
+  -H <span style="color:#a3be8c;">"Content-Type: application/json"</span> \
+  -d <span style="color:#a3be8c;">'{ "blocks": [
+    { "type": "heading", "text": "Invoice #1047" },
+    { "type": "table",
+      "headers": "Item, Qty, Price",
+      "rows": "Widget Pro, 1, $299.00" }
+  ] }'</span> \
+  -o invoice.pdf</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ── npm Package ──────────────────────────────────────── -->
   <section class="section section-border">
     <div class="container">
@@ -642,8 +673,11 @@ doc.<span style="color:#88c0d0;">table</span>({
   <section class="cta-section section-border">
     <div class="container">
       <h2 class="heading-lg">Start building better PDFs today.</h2>
-      <p class="body-lg">No sign-up required. Open the builder and create your first document in 30 seconds.</p>
-      <a href="app.html" class="btn btn-primary btn-lg">Launch TangentFlow</a>
+      <p class="body-lg">Wire up the API for production workloads, or open the builder and create your first document in 30 seconds.</p>
+      <div class="hero-actions" style="justify-content:center;">
+        <a href="api-dashboard.html" class="btn btn-primary btn-lg">Get API Access &rarr;</a>
+        <a href="app.html" class="btn btn-secondary btn-lg">Launch the Builder</a>
+      </div>
     </div>
   </section>
 
